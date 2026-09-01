@@ -199,11 +199,29 @@
             justify-content: center;
             flex-direction: column;
             gap: 2px;
+            position: relative;
         }
 
         .shift-name:hover {
             opacity: 0.8;
             transform: scale(1.05);
+        }
+
+        .shift-name.has-kort-dag::before {
+            content: '✓½';
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
 
         .shift-time {
@@ -236,27 +254,6 @@
             background: linear-gradient(135deg, #16a085 0%, #138d75 100%);
             color: white;
             border: 2px solid #0e5a47;
-        }
-
-        .kort-dag {
-            position: relative;
-        }
-
-        .kort-dag::after {
-            content: '½';
-            position: absolute;
-            top: 2px;
-            right: 5px;
-            background: #e74c3c;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
         }
 
         .legend {
@@ -471,18 +468,6 @@
             border-radius: 4px;
         }
 
-        .kort-dag-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .kort-dag-checkbox input {
-            width: auto;
-            cursor: pointer;
-        }
-
         .version-info {
             background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
             color: white;
@@ -490,6 +475,68 @@
             border-radius: 6px;
             font-size: 14px;
             font-weight: bold;
+        }
+
+        .day-edit-modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+        }
+
+        .day-edit-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .day-edit-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .day-edit-content h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .day-edit-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .kort-dag-selector {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .kort-dag-selector label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .kort-dag-selector input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
         }
 
         @media (max-width: 768px) {
@@ -566,7 +613,7 @@
                 <select id="weekSelect" onchange="updateSchedule()">
                     <!-- Uger vil blive genereret dynamisk -->
                 </select>
-                <div class="version-info">v1.0</div>
+                <div class="version-info">v1.1</div>
             </div>
             <div>
                 <div class="week-info" id="weekInfo">
@@ -605,23 +652,23 @@
 
         <div class="legend">
             <div class="legend-item">
-                <div class="legend-color vagt-1"><span>Vagt 1<span class="shift-time">7:00-15:00</span></span></div>
+                <div class="legend-color vagt-1"><span>7:00-15:00<span class="shift-time"></span></span></div>
                 <span id="vagtNavn1">Navn</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color vagt-2"><span>Vagt 2<span class="shift-time">8:00-16:00</span></span></div>
+                <div class="legend-color vagt-2"><span>8:00-16:00<span class="shift-time"></span></span></div>
                 <span id="vagtNavn2">Navn</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color vagt-3"><span>Vagt 3<span class="shift-time">10:00-18:00</span></span></div>
+                <div class="legend-color vagt-3"><span>10:00-18:00<span class="shift-time"></span></span></div>
                 <span id="vagtNavn3">Navn (Fast)</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color vagt-4"><span>Vagt 4<span class="shift-time">12:00-20:00</span></span></div>
+                <div class="legend-color vagt-4"><span>12:00-20:00<span class="shift-time"></span></span></div>
                 <span id="vagtNavn4">Navn</span>
             </div>
             <div class="legend-item">
-                <div class="legend-color vagt-5"><span>Vagt 5<span class="shift-time">9:00-17:00</span></span></div>
+                <div class="legend-color vagt-5"><span>9:00-17:00<span class="shift-time"></span></span></div>
                 <span id="vagtNavn5">Navn (Fast)</span>
             </div>
         </div>
@@ -637,7 +684,7 @@
             </div>
             <div class="stat-card">
                 <h3>½ time korte dage</h3>
-                <p id="shortDays">0/1</p>
+                <p id="shortDaysCount">0/1</p>
             </div>
             <div class="stat-card">
                 <h3>Status</h3>
@@ -677,6 +724,29 @@
         </div>
     </div>
 
+    <!-- Day Edit Modal -->
+    <div id="dayEditModal" class="day-edit-modal">
+        <div class="day-edit-content">
+            <h3 id="dayEditTitle">Rediger vagt</h3>
+            <div class="day-edit-form">
+                <label>Navn på medarbejder:</label>
+                <input type="text" id="dayEditName" placeholder="Indtast navn">
+                
+                <div class="kort-dag-selector">
+                    <label>
+                        <input type="checkbox" id="dayEditKortDag">
+                        <span>½ time kortere arbejdsdag (15:30 i stedet for 16:00)</span>
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn-secondary" onclick="closeDayEditModal()" style="flex: 1;">Annuller</button>
+                    <button class="btn-primary" onclick="saveDayEdit()" style="flex: 1;">Gem</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Standard vagter med tider
         const vagter = {
@@ -692,6 +762,9 @@
             weeks: 16,
             weeklyHours: 37
         };
+
+        // Dagsniveau overrides og kortdagsindstillinger
+        let weeklyOverrides = {}; // { 'uge-vagt-dag': { navn: 'X', kortDag: true/false } }
 
         // Funktion til at få ugenummer
         function getWeekNumber(date) {
@@ -726,7 +799,8 @@
                     dateString: formatDate(date),
                     dateDisplay: date.toLocaleDateString('da-DK', { day: '2-digit', month: '2-digit' }),
                     fullDate: date.toLocaleDateString('da-DK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
-                    dayId: dayNames[i]
+                    dayId: dayNames[i],
+                    dayIndex: i
                 });
             }
             
@@ -772,7 +846,7 @@
                 vagtDiv.className = 'shift-editor';
                 
                 let html = `
-                    <h4>Vagt ${i} (${vagt.time})</h4>
+                    <h4>${vagt.time}</h4>
                     <div class="shift-edit-row">
                         <div>
                             <label>Navn:</label>
@@ -835,6 +909,46 @@
             alert('Ændringer gemt!');
         }
 
+        let currentEditKey = null;
+
+        function openDayEditModal(week, vagtNum, day) {
+            currentEditKey = `${week}-${vagtNum}-${day}`;
+            const override = weeklyOverrides[currentEditKey] || {};
+            
+            let navn = vagter[vagtNum].navn;
+            if (vagter[vagtNum].type === 'rolle' && vagter[vagtNum].rotationList) {
+                const rotationIndex = (week - 1 + vagtNum - 1) % vagter[vagtNum].rotationList.length;
+                navn = vagter[vagtNum].rotationList[rotationIndex];
+            }
+
+            document.getElementById('dayEditName').value = override.navn || navn;
+            document.getElementById('dayEditKortDag').checked = override.kortDag || false;
+            document.getElementById('dayEditTitle').textContent = `Rediger vagt for ${vagter[vagtNum].time}`;
+            
+            document.getElementById('dayEditModal').classList.add('show');
+        }
+
+        function closeDayEditModal() {
+            document.getElementById('dayEditModal').classList.remove('show');
+            currentEditKey = null;
+        }
+
+        function saveDayEdit() {
+            if (!currentEditKey) return;
+            
+            const navn = document.getElementById('dayEditName').value.trim();
+            const kortDag = document.getElementById('dayEditKortDag').checked;
+            
+            if (navn) {
+                weeklyOverrides[currentEditKey] = { navn, kortDag };
+            } else {
+                delete weeklyOverrides[currentEditKey];
+            }
+            
+            updateSchedule();
+            closeDayEditModal();
+        }
+
         function updateSchedule() {
             const weekSelect = document.getElementById('weekSelect');
             const selectedWeek = parseInt(weekSelect.value) + 1;
@@ -871,7 +985,7 @@
                 // Vagt label
                 const labelCell = document.createElement('td');
                 labelCell.className = 'shift-label';
-                labelCell.innerHTML = `<strong>Vagt ${vagtNum}</strong><br><small>(${vagt.time})</small>`;
+                labelCell.innerHTML = `<strong>${vagt.time}</strong>`;
                 row.appendChild(labelCell);
                 
                 // Dage
@@ -885,10 +999,19 @@
                         const rotationIndex = (selectedWeek - 1 + vagtNum - 1) % vagt.rotationList.length;
                         navn = vagt.rotationList[rotationIndex];
                     }
+
+                    // Tjek for dagsniveau overrides
+                    const overrideKey = `${selectedWeek}-${vagtNum}-${day}`;
+                    let kortDag = false;
+                    if (weeklyOverrides[overrideKey]) {
+                        navn = weeklyOverrides[overrideKey].navn;
+                        kortDag = weeklyOverrides[overrideKey].kortDag;
+                    }
                     
                     const vagtClass = `vagt-${vagtNum}`;
                     dayCell.className = `${vagtClass}`;
-                    dayCell.innerHTML = `<div class="shift-name">
+                    dayCell.onclick = () => openDayEditModal(selectedWeek, vagtNum, day);
+                    dayCell.innerHTML = `<div class="shift-name ${kortDag ? 'has-kort-dag' : ''}">
                         <span>${navn}</span>
                         <span class="shift-time">${vagt.time}</span>
                     </div>`;
@@ -917,9 +1040,13 @@
             
             // Luk modal når der klikkes uden for det
             window.onclick = function(event) {
-                const modal = document.getElementById('adminModal');
-                if (event.target == modal) {
-                    modal.classList.remove('show');
+                const adminModal = document.getElementById('adminModal');
+                const dayModal = document.getElementById('dayEditModal');
+                if (event.target == adminModal) {
+                    adminModal.classList.remove('show');
+                }
+                if (event.target == dayModal) {
+                    dayModal.classList.remove('show');
                 }
             };
         });
