@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vagtplan System v0.1 - Hele Året</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .week-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .week-selector select {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .week-selector select:hover {
+            border-color: #2980b9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .week-info {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .date-info {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            min-width: 120px;
+            position: relative;
+        }
+
+        th {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        th:first-child {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            text-align: left;
+            min-width: 150px;
+        }
+
+        th.holiday {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .date-header {
+            font-size: 12px;
+            font-weight: normal;
+            opacity: 0.9;
+            display: block;
+            margin-top: 3px;
+        }
+
+        .holiday-indicator {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e3f2fd;
+            transition: background 0.3s ease;
+        }
+
+        .employee-name {
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        .employee-name.fixed-shift {
+            color: #e74c3c;
+            font-style: italic;
+        }
+
+        .shift-type {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .shift-morning {
+            background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);
+            color: white;
+        }
+
+        .shift-evening {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .shift-night {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+        }
+
+        .shift-off {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+        }
+
+        .shift-fixed {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            border: 2px solid #c44569;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .legend {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            padding: 5px 10px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .stats {
+            padding: 20px 30px;
+            background: #e8f4f8;
+            border-top: 1px solid #dee2e6;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .holiday-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 30px;
+            display: none;
+        }
+
+        .holiday-info.show {
+            display: block;
+        }
+
+        .holiday-info h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .holiday-list {
+            list-style: none;
+            color: #856404;
+        }
+
+        .holiday-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid #ffeaa7;
+        }
+
+        .holiday-list li:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-holidays {
+            background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-holidays:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+        }
+
+        .version-info {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+                margin: -20px;
+            }
+            
+            header h1 {
+                font-size: 1.8em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            th, td {
+                padding: 10px 5px;
+                min-width: 80px;
+                font-size: 14px;
+            }
+            
+            .employee-name {
+                font-size: 14px;
+            }
+            
+            .version-info {
+                display: block;
+                margin-left: 0;
+                margin-top: 10px;
+            }
+        }
+
+        .print-button {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .print-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .controls, .legend, .stats, .holiday-info {
+                display: none;
+            }
+            
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📅 Vagtplan System v0.1 - 2026</h1>
+            <p>6-ugers rotationsplan - hele året med danske helligdage</p>
+        </header>
+
+        <div class="controls">
+            <div class="week-selector">
+                <label for="weekSelect">Vælg uge:</label>
+                <select id="weekSelect" onchange="updateSchedule()">
+                    <!-- Uger vil blive genereret dynamisk -->
+                </select>
+                <button class="toggle-holidays" onclick="toggleHolidayInfo()">
+                    🎄 Vis helligdage
+                </button>
+                <div class="version-info">v0.1</div>
+            </div>
+            <div>
+                <div class="week-info" id="weekInfo">
+                    Uge 1 af 52
+                </div>
+                <div class="date-info" id="dateInfo">
+                    <!-- Datoer vil blive indsat her -->
+                </div>
+            </div>
+            <button class="print-button" onclick="window.print()">
+                🖨️ Print vagtplan
+            </button>
+        </div>
+
+        <div class="holiday-info" id="holidayInfo">
+            <h4>🎄 Helligdage i denne uge:</h4>
+            <ul class="holiday-list" id="holidayList"></ul>
+        </div>
+
+        <div class="table-container">
+            <table id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th>Medarbejder</th>
+                        <th id="th-mon">Mandag<span class="date-header" id="date-mon"></span></th>
+                        <th id="th-tue">Tirsdag<span class="date-header" id="date-tue"></span></th>
+                        <th id="th-wed">Onsdag<span class="date-header" id="date-wed"></span></th>
+                        <th id="th-thu">Torsdag<span class="date-header" id="date-thu"></span></th>
+                        <th id="th-fri">Fredag<span class="date-header" id="date-fri"></span></th>
+                        <th id="th-sat">Lørdag<span class="date-header" id="date-sat"></span></th>
+                        <th id="th-sun">Søndag<span class="date-header" id="date-sun"></span></th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color shift-morning">DAG</div>
+                <span>Dagvagt (06:00-14:00)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color shift-evening">AFT</div>
+                <span>Aftenvagt 1 (11:00-18:00)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color shift-night">DAG 2</div>
+                <span>Aftenvagt 2 (13:00-20:00)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color shift-off">FRIDAG</div>
+                <span>Fridag</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color shift-fixed">FAST</div>
+                <span>Fast vagt (Lars)</span>
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <h3>Aktive medarbejdere</h3>
+                <p id="activeEmployees">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Dagvagter</h3>
+                <p id="morningShifts">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Aftenvagter 1</h3>
+                <p id="eveningShifts">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Aftenvagter 2</h3>
+                <p id="nightShifts">0</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Medarbejdere
+        const employees = [
+            'Anton',
+            'Børge',
+            'Claes',
+            'Danny',
+            'Erik',
+            'Frede',
+            'Helege (Fast AFT)'
+        ];
+
+        // Danske helligdage for 2026
+        const danishHolidays2026 = {
+            '2026-01-01': { name: 'Nytårsdag', type: 'flagday' },
+            '2026-03-29': { name: 'Skærtorsdag', type: 'religious' },
+            '2026-04-02': { name: '2. påskedag', type: 'religious' },
+            '2026-04-23': { name: 'Store Bededag', type: 'religious' },
+            '2026-05-08': { name: 'Kristi Himmelfartsdag', type: 'religious' },
+            '2026-05-18': { name: '2. pinsedag', type: 'religious' },
+            '2026-06-05': { name: 'Grundlovsdag', type: 'flagday' },
+            '2026-12-24': { name: 'Juleaften', type: 'christmas' },
+            '2026-12-25': { name: '1. juledag', type: 'christmas' },
+            '2026-12-26': { name: '2. juledag', type: 'christmas' },
+            '2026-12-31': { name: 'Nytårsaften', type: 'flagday' }
+        };
+
+        // Beregn påskedag og relaterede helligdage for 2026
+        function calculateEasterHolidays(year) {
+            // Påskeformlen (computus)
+            const a = year % 19;
+            const b = Math.floor(year / 100);
+            const c = year % 100;
+            const d = Math.floor(b / 4);
+            const e = b % 4;
+            const f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3);
+            const h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4);
+            const k = c % 4;
+            const l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            const month = Math.floor((h + l - 7 * m + 114) / 31);
+            const day = ((h + l - 7 * m + 114) % 31) + 1;
+            
+            const easter = new Date(year, month - 1, day);
+            
+            // Beregn relaterede helligdage
+            const holidays = {};
+            
+            // Palmesøndag (7 dage før påske)
+            const palmSunday = new Date(easter);
+            palmSunday.setDate(easter.getDate() - 7);
+            holidays[formatDate(palmSunday)] = { name: 'Palmesøndag', type: 'religious' };
+            
+            // Skærtorsdag (3 dage før påske)
+            const maundyThursday = new Date(easter);
+            maundyThursday.setDate(easter.getDate() - 3);
+            holidays[formatDate(maundyThursday)] = { name: 'Skærtorsdag', type: 'religious' };
+            
+            // Langfredag (2 dage før påske)
+            const goodFriday = new Date(easter);
+            goodFriday.setDate(easter.getDate() - 2);
+            holidays[formatDate(goodFriday)] = { name: 'Langfredag', type: 'religious' };
+            
+            // 1. påskedag
+            holidays[formatDate(easter)] = { name: '1. påskedag', type: 'religious' };
+            
+            // 2. påskedag (1 dag efter påske)
+            const easterMonday = new Date(easter);
+            easterMonday.setDate(easter.getDate() + 1);
+            holidays[formatDate(easterMonday)] = { name: '2. påskedag', type: 'religious' };
+            
+            // Store Bededag (4. fredag efter påske)
+            const greatPrayerDay = new Date(easter);
+            greatPrayerDay.setDate(easter.getDate() + 26);
+            holidays[formatDate(greatPrayerDay)] = { name: 'Store Bededag', type: 'religious' };
+            
+            // Kristi Himmelfartsdag (39 dage efter påske)
+            const ascensionDay = new Date(easter);
+            ascensionDay.setDate(easter.getDate() + 39);
+            holidays[formatDate(ascensionDay)] = { name: 'Kristi Himmelfartsdag', type: 'religious' };
+            
+            // Pinsesøndag (49 dage efter påske)
+            const pentecostSunday = new Date(easter);
+            pentecostSunday.setDate(easter.getDate() + 49);
+            holidays[formatDate(pentecostSunday)] = { name: 'Pinsesøndag', type: 'religious' };
+            
+            // 2. pinsedag (50 dage efter påske)
+            const pentecostMonday = new Date(easter);
+            pentecostMonday.setDate(easter.getDate() + 50);
+            holidays[formatDate(pentecostMonday)] = { name: '2. pinsedag', type: 'religious' };
+            
+            return holidays;
+        }
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // 6-ugers plan (42 dage) - basis for alle medarbejdere
+        const baseSchedule = [
+            'FRIDAG', 'DAG', 'DAG', 'DAG', 'DAG', 'FRIDAG', 'FRIDAG',  // Uge 1
+            'DAG 2', 'DAG 2', 'DAG 2', 'DAG 2', 'DAG 2', 'FRIDAG', 'FRIDAG',     // Uge 2
+            'DAG', 'DAG', 'DAG', 'DAG', 'DAG', 'FRIDAG', 'FRIDAG',     // Uge 3
+            'DAG', 'DAG', 'DAG', 'AFT', 'AFT', 'FRIDAG', 'FRIDAG',     // Uge 4
+            'AFT', 'AFT', 'AFT', 'DAG', 'DAG', 'FRIDAG', 'FRIDAG',     // Uge 5
+            'DAG', 'DAG', 'DAG', 'FRIDAG', 'FRIDAG', 'DAG', 'DAG'      // Uge 6
+        ];
+
+        function getShiftClass(shift, employee) {
+            if (employee === 'Lars (Fast AFT)') return 'shift-fixed';
+            
+            switch(shift) {
+                case 'DAG': return 'shift-morning';
+                case 'AFT': return 'shift-evening';
+                case 'DAG 2': return 'shift-night';
+                case 'FRIDAG': return 'shift-off';
+                default: return '';
+            }
+        }
+
+        function getWeekDates(weekNumber) {
+            const year = 2026;
+            const firstDayOfYear = new Date(year, 0, 1);
+            const daysOffset = (weekNumber - 1) * 7 - firstDayOfYear.getDay() + 1;
+            const weekStart = new Date(firstDayOfYear);
+            weekStart.setDate(firstDayOfYear.getDate() + daysOffset);
+            
+            const weekDates = [];
+            const dayNames = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+            
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(weekStart);
+                date.setDate(weekStart.getDate() + i);
+                weekDates.push({
+                    date: date,
+                    dateString: formatDate(date),
+                    dateDisplay: date.toLocaleDateString('da-DK', { day: '2-digit', month: '2-digit' }),
+                    fullDate: date.toLocaleDateString('da-DK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+                    dayId: dayNames[i],
+                    isHoliday: false,
+                    holidayName: ''
+                });
+            }
+            
+            return weekDates;
+        }
+
+        function initializeWeekSelector() {
+            const weekSelect = document.getElementById('weekSelect');
+            weekSelect.innerHTML = '';
+            
+            for (let i = 1; i <= 52; i++) {
+                const option = document.createElement('option');
+                option.value = i - 1;
+                option.textContent = `Uge ${i}`;
+                weekSelect.appendChild(option);
+            }
+            
+            // Sæt til indeværende uge
+            const today = new Date();
+            const currentWeek = getWeekNumber(today);
+            weekSelect.value = currentWeek - 1;
+        }
+
+        function getWeekNumber(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        }
+
+        function checkHolidays(weekDates) {
+            // Kombiner statiske helligdage med beregnede påske-helligdage
+            const allHolidays = { ...danishHolidays2026 };
+            const easterHolidays = calculateEasterHolidays(2026);
+            Object.assign(allHolidays, easterHolidays);
+            
+            const holidaysInWeek = [];
+            
+            weekDates.forEach(dayInfo => {
+                if (allHolidays[dayInfo.dateString]) {
+                    dayInfo.isHoliday = true;
+                    dayInfo.holidayName = allHolidays[dayInfo.dateString].name;
+                    dayInfo.holidayType = allHolidays[dayInfo.dateString].type;
+                    holidaysInWeek.push({
+                        date: dayInfo.fullDate,
+                        name: dayInfo.holidayName
+                    });
+                }
+            });
+            
+            return holidaysInWeek;
+        }
+
+        function toggleHolidayInfo() {
+            const holidayInfo = document.getElementById('holidayInfo');
+            holidayInfo.classList.toggle('show');
+        }
+
+        function updateSchedule() {
+            const weekSelect = document.getElementById('weekSelect');
+            const selectedWeek = parseInt(weekSelect.value) + 1;
+            const weekInfo = document.getElementById('weekInfo');
+            const dateInfo = document.getElementById('dateInfo');
+            const scheduleBody = document.getElementById('scheduleBody');
+            const holidayInfo = document.getElementById('holidayInfo');
+            const holidayList = document.getElementById('holidayList');
+            
+            weekInfo.textContent = `Uge ${selectedWeek} af 52`;
+            
+            // Hent og vis ugedatoer
+            const weekDates = getWeekDates(selectedWeek);
+            const holidaysInWeek = checkHolidays(weekDates);
+            
+            // Opdater datoer i tabel headers og marker helligdage
+            weekDates.forEach(dayInfo => {
+                const dateElement = document.getElementById(`date-${dayInfo.dayId}`);
+                const thElement = document.getElementById(`th-${dayInfo.dayId}`);
+                
+                if (dateElement) {
+                    dateElement.textContent = ` (${dayInfo.dateDisplay})`;
+                }
+                
+                if (thElement) {
+                    thElement.classList.remove('holiday');
+                    // Fjern eksisterende holiday indicator
+                    const existingIndicator = thElement.querySelector('.holiday-indicator');
+                    if (existingIndicator) {
+                        existingIndicator.remove();
+                    }
+                    
+                    if (dayInfo.isHoliday) {
+                        thElement.classList.add('holiday');
+                        // Tilføj holiday indicator
+                        const indicator = document.createElement('div');
+                        indicator.className = 'holiday-indicator';
+                        indicator.textContent = '🎄';
+                        thElement.appendChild(indicator);
+                    }
+                }
+            });
+            
+            // Vis helligdage i info sektion
+            if (holidaysInWeek.length > 0) {
+                holidayList.innerHTML = '';
+                holidaysInWeek.forEach(holiday => {
+                    const li = document.createElement('li');
+                    li.textContent = `${holiday.date}: ${holiday.name}`;
+                    holidayList.appendChild(li);
+                });
+                holidayInfo.classList.add('show');
+            } else {
+                holidayInfo.classList.remove('show');
+            }
+            
+            // Vis dato interval
+            const startDate = weekDates[0].fullDate;
+            const endDate = weekDates[6].fullDate;
+            dateInfo.textContent = `${startDate} - ${endDate}`;
+            
+            // Ryd tabel
+            scheduleBody.innerHTML = '';
+            
+            let morningShifts = 0;
+            let eveningShifts = 0;
+            let nightShifts = 0;
+            let fixedShifts = 0;
+            
+            // Generer rækker for hver medarbejder
+            employees.forEach((employee, empIndex) => {
+                const row = document.createElement('tr');
+                
+                // Medarbejder navn
+                const nameCell = document.createElement('td');
+                nameCell.className = 'employee-name';
+                if (employee === 'Lars (Fast AFT)') {
+                    nameCell.classList.add('fixed-shift');
+                }
+                nameCell.textContent = employee;
+                row.appendChild(nameCell);
+                
+                // Ugedage
+                for (let day = 0; day < 7; day++) {
+                    const shiftCell = document.createElement('td');
+                    let shift;
+                    
+                    // Special case for Lars - altid fast aftenvagt
+                    if (employee === 'Lars (Fast AFT)') {
+                        shift = 'AFT';
+                        fixedShifts++;
+                    } else {
+                        // Beregn hvilken uge medarbejderen skal vise (forskudt med deres index)
+                        const employeeWeekOffset = ((selectedWeek - 1) + empIndex) % 6;
+                        const shiftIndex = employeeWeekOffset * 7 + day;
+                        shift = baseSchedule[shiftIndex];
+                    }
+                    
+                    shiftCell.innerHTML = `<span class="shift-type ${getShiftClass(shift, employee)}">${shift}</span>`;
+                    row.appendChild(shiftCell);
+                    
+                    // Tæl vagter (kun for rotation medarbejdere)
+                    if (employee !== 'Lars (Fast AFT)') {
+                        if (shift === 'DAG') morningShifts++;
+                        else if (shift === 'AFT') eveningShifts++;
+                        else if (shift === 'DAG 2') nightShifts++;
+                    }
+                }
+                
+                scheduleBody.appendChild(row);
+            });
+            
+            // Opdater statistik
+            document.getElementById('activeEmployees').textContent = employees.length;
+            document.getElementById('morningShifts').textContent = morningShifts;
+            document.getElementById('eveningShifts').textContent = eveningShifts + fixedShifts;
+            document.getElementById('nightShifts').textContent = nightShifts;
+        }
+
+        // Initialiser ved indlæsning
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeWeekSelector();
+            updateSchedule();
+        });
+    </script>
+</body>
+</html>
