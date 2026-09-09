@@ -856,7 +856,8 @@
                         </div>
                         <div>
                             <label>Type:</label>
-                            <select id="shift-${i}-type" onchange="updateShiftType(${i}, this.value)">
+                            <select id="shift-${i}-type" onchange="updateShiftType(${i}, this.value)"
+                                                          ${vagt.locked ? 'disabled' : ''}>
                                 <option value="rolle" ${!isFixed ? 'selected' : ''}>Rulle</option>
                                 <option value="fast" ${isFixed ? 'selected' : ''}>Fast</option>
                             </select>
@@ -879,6 +880,8 @@
         }
 
         function updateShiftType(shiftNum, type) {
+            if (vagter[shiftNum].locked) return;
+            
             vagter[shiftNum].type = type;
             renderShiftEditor();
         }
