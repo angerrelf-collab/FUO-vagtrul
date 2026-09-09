@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FUO Vagtplan - Rulle- og Fastvagtskema</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .week-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .week-selector select {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .week-selector select:hover {
+            border-color: #2980b9;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .week-info {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .date-info {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .admin-button {
+            background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .admin-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+        }
+
+        .print-button {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .print-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            min-width: 140px;
+            position: relative;
+        }
+
+        th {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        th:first-child {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            text-align: left;
+            min-width: 150px;
+        }
+
+        .date-header {
+            font-size: 12px;
+            font-weight: normal;
+            opacity: 0.9;
+            display: block;
+            margin-top: 3px;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e3f2fd;
+            transition: background 0.3s ease;
+        }
+
+        .shift-label {
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: left;
+            font-size: 16px;
+        }
+
+        .shift-name {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 2px;
+            position: relative;
+        }
+
+        .shift-name:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        .shift-name.has-kort-dag::before {
+            content: '✓½';
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .shift-time {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .vagt-1 {
+            background: linear-gradient(135deg, #f39c12 0%, #f1c40f 100%);
+            color: white;
+        }
+
+        .vagt-2 {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .vagt-3 {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: 2px solid #1a5276;
+        }
+
+        .vagt-4 {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+        }
+
+        .vagt-5 {
+            background: linear-gradient(135deg, #16a085 0%, #138d75 100%);
+            color: white;
+            border: 2px solid #0e5a47;
+        }
+
+        .legend {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            padding: 5px;
+            font-weight: bold;
+            color: white;
+            text-align: center;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .stats {
+            padding: 20px 30px;
+            background: #e8f4f8;
+            border-top: 1px solid #dee2e6;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+
+        .modal.show {
+            display: block;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 20px 30px;
+            margin: -30px -30px 20px -30px;
+            border-radius: 15px 15px 0 0;
+            font-size: 1.5em;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .close-btn:hover {
+            opacity: 0.7;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .shift-editor {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+        }
+
+        .shift-editor h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .shift-edit-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .shift-edit-row input {
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+
+        .version-info {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .day-edit-modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+        }
+
+        .day-edit-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .day-edit-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .day-edit-content h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .day-edit-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .kort-dag-selector {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+
+        .kort-dag-selector label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .kort-dag-selector input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                border-radius: 0;
+                margin: -20px;
+            }
+            
+            header h1 {
+                font-size: 1.8em;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .button-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .button-group button {
+                width: 100%;
+            }
+            
+            th, td {
+                padding: 10px 5px;
+                min-width: 80px;
+                font-size: 14px;
+            }
+            
+            .shift-label {
+                font-size: 14px;
+            }
+
+            .shift-edit-row {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 20% auto;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .controls, .legend, .stats, .button-group {
+                display: none;
+            }
+            
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📅 FUO Vagtplan</h1>
+            <p>Rulle- og fastvagtskema - Mandag til Fredag</p>
+        </header>
+
+        <div class="controls">
+            <div class="week-selector">
+                <label for="weekSelect">Vælg uge:</label>
+                <select id="weekSelect" onchange="updateSchedule()">
+                    <!-- Uger vil blive genereret dynamisk -->
+                </select>
+                <div class="version-info">v1.2</div>
+            </div>
+            <div>
+                <div class="week-info" id="weekInfo">
+                    Uge 1 af 52
+                </div>
+                <div class="date-info" id="dateInfo">
+                    <!-- Datoer vil blive indsat her -->
+                </div>
+            </div>
+            <div class="button-group">
+                <button class="admin-button" onclick="openAdminPanel()">
+                    ⚙️ Administrer vagter
+                </button>
+                <button class="print-button" onclick="window.print()">
+                    🖨️ Print vagtplan
+                </button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th>Vagt</th>
+                        <th id="th-mon">Mandag<span class="date-header" id="date-mon"></span></th>
+                        <th id="th-tue">Tirsdag<span class="date-header" id="date-tue"></span></th>
+                        <th id="th-wed">Onsdag<span class="date-header" id="date-wed"></span></th>
+                        <th id="th-thu">Torsdag<span class="date-header" id="date-thu"></span></th>
+                        <th id="th-fri">Fredag<span class="date-header" id="date-fri"></span></th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color vagt-1"><span>7:00-15:00<span class="shift-time"></span></span></div>
+                <span id="vagtNavn1">Navn</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color vagt-2"><span>8:00-16:00<span class="shift-time"></span></span></div>
+                <span id="vagtNavn2">Navn</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color vagt-3"><span>10:00-18:00<span class="shift-time"></span></span></div>
+                <span id="vagtNavn3">Navn (Fast)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color vagt-4"><span>12:00-20:00<span class="shift-time"></span></span></div>
+                <span id="vagtNavn4">Navn</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color vagt-5"><span>9:00-16:30<span class="shift-time"></span></span></div>
+                <span id="vagtNavn5">Navn (Fast)</span>
+            </div>
+        </div>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <h3>Normperiode</h3>
+                <p id="normPeriod">16 uger</p>
+            </div>
+            <div class="stat-card">
+                <h3>Periode timer</h3>
+                <p id="periodHours">592 timer</p>
+            </div>
+            <!-- 
+            <div class="stat-card">
+                <h3>½ time korte dage</h3>
+                <p id="shortDaysCount">0/1</p>
+            </div>
+            -->
+            <div class="stat-card">
+                <h3>Status</h3>
+                <p id="status">Aktiv</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>Administrer Vagter</span>
+                <button class="close-btn" onclick="closeAdminPanel()">&times;</button>
+            </div>
+
+            <div id="shiftsContainer"></div>
+
+            <div class="form-group">
+                <label>Normperiode indstillinger:</label>
+                <div class="form-row">
+                    <div>
+                        <label>Periode længde (uger):</label>
+                        <input type="number" id="normWeeks" min="1" value="16">
+                    </div>
+                    <div>
+                        <label>Ugentlig timer:</label>
+                        <input type="number" id="weeklyHours" min="1" value="37">
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-row">
+                <button class="btn-secondary" onclick="closeAdminPanel()">Luk</button>
+                <button class="btn-primary" onclick="saveAdminSettings()">Gem ændringer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Day Edit Modal -->
+    <div id="dayEditModal" class="day-edit-modal">
+        <div class="day-edit-content">
+            <h3 id="dayEditTitle">Rediger vagt</h3>
+            <div class="day-edit-form">
+                <label>Navn på medarbejder:</label>
+                <input type="text" id="dayEditName" placeholder="Indtast navn">
+                
+                <div class="kort-dag-selector">
+                    <label>
+                        <input type="checkbox" id="dayEditKortDag">
+                        <span>½ time kortere arbejdsdag (15:30 i stedet for 16:00)</span>
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn-secondary" onclick="closeDayEditModal()" style="flex: 1;">Annuller</button>
+                    <button class="btn-primary" onclick="saveDayEdit()" style="flex: 1;">Gem</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Standard vagter med tider
+        const vagter = {
+            1: { time: '7:00-15:00', navn: 'Christian', type: 'rolle', rotationList: ['Christian', 'Michael', 'Martin'] },
+            2: { time: '8:00-16:00', navn: 'Michael', type: 'rolle', rotationList: ['Christian', 'Michael', 'Martin'] },
+            3: { time: '12:00-20:00', navn: 'Martin', type: 'rolle', rotationList: ['Christian', 'Michael', 'Martin'] },
+            4: { time: '10:00-18:00', navn: 'Henrik', type: 'fast', locked: true },
+            5: { time: '9:00-17:00', navn: 'Dorte', type: 'fast', locked: true }
+        };
+
+        // Normperiode indstillinger
+        let normSettings = {
+            weeks: 16,
+            weeklyHours: 37
+        };
+
+        // Dagsniveau overrides og kortdagsindstillinger
+        let weeklyOverrides = {}; // { 'uge-vagt-dag': { navn: 'X', kortDag: true/false } }
+
+        // Funktion til at få ugenummer
+        function getWeekNumber(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        }
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function getWeekDates(weekNumber) {
+            const year = 2026;
+            const firstDayOfYear = new Date(year, 0, 1);
+            const daysOffset = (weekNumber - 1) * 7 - firstDayOfYear.getDay() + 1;
+            const weekStart = new Date(firstDayOfYear);
+            weekStart.setDate(firstDayOfYear.getDate() + daysOffset);
+            
+            const weekDates = [];
+            const dayNames = ['mon', 'tue', 'wed', 'thu', 'fri'];
+            
+            // Kun mandag til fredag
+            for (let i = 0; i < 5; i++) {
+                const date = new Date(weekStart);
+                date.setDate(weekStart.getDate() + i);
+                weekDates.push({
+                    date: date,
+                    dateString: formatDate(date),
+                    dateDisplay: date.toLocaleDateString('da-DK', { day: '2-digit', month: '2-digit' }),
+                    fullDate: date.toLocaleDateString('da-DK', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+                    dayId: dayNames[i],
+                    dayIndex: i
+                });
+            }
+            
+            return weekDates;
+        }
+
+        function initializeWeekSelector() {
+            const weekSelect = document.getElementById('weekSelect');
+            weekSelect.innerHTML = '';
+            
+            for (let i = 1; i <= 52; i++) {
+                const option = document.createElement('option');
+                option.value = i - 1;
+                option.textContent = `Uge ${i}`;
+                weekSelect.appendChild(option);
+            }
+            
+            const today = new Date();
+            const currentWeek = getWeekNumber(today);
+            weekSelect.value = Math.max(0, currentWeek - 1);
+        }
+
+        function openAdminPanel() {
+            const modal = document.getElementById('adminModal');
+            modal.classList.add('show');
+            renderShiftEditor();
+        }
+
+        function closeAdminPanel() {
+            const modal = document.getElementById('adminModal');
+            modal.classList.remove('show');
+        }
+
+        function renderShiftEditor() {
+            const container = document.getElementById('shiftsContainer');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= 5; i++) {
+                const vagt = vagter[i];
+                const isFixed = vagt.type === 'fast';
+                
+                const vagtDiv = document.createElement('div');
+                vagtDiv.className = 'shift-editor';
+                
+                let html = `
+                    <h4>${vagt.time}</h4>
+                    <div class="shift-edit-row">
+                        <div>
+                            <label>Navn:</label>
+                            <input type="text" id="shift-${i}-name" value="${vagt.navn}">
+                        </div>
+                        <div>
+                            <label>Type:</label>
+                            <select id="shift-${i}-type" onchange="updateShiftType(${i}, this.value)"
+                                                          ${vagt.locked ? 'disabled' : ''}>
+                                <option value="rolle" ${!isFixed ? 'selected' : ''}>Rulle</option>
+                                <option value="fast" ${isFixed ? 'selected' : ''}>Fast</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+
+                if (!isFixed && vagt.rotationList) {
+                    html += `
+                        <div style="margin-top: 10px;">
+                            <label>Rotationsliste (kommasepareret):</label>
+                            <input type="text" id="shift-${i}-rotation" value="${vagt.rotationList.join(', ')}">
+                        </div>
+                    `;
+                }
+
+                vagtDiv.innerHTML = html;
+                container.appendChild(vagtDiv);
+            }
+        }
+
+        function updateShiftType(shiftNum, type) {
+            if (vagter[shiftNum].locked) return;
+            
+            vagter[shiftNum].type = type;
+            renderShiftEditor();
+        }
+
+        function saveAdminSettings() {
+            // Gem vagt indstillinger
+            for (let i = 1; i <= 5; i++) {
+                const nameInput = document.getElementById(`shift-${i}-name`);
+                if (nameInput) {
+                    vagter[i].navn = nameInput.value;
+                }
+
+                const rotationInput = document.getElementById(`shift-${i}-rotation`);
+                if (rotationInput) {
+                    vagter[i].rotationList = rotationInput.value.split(',').map(n => n.trim());
+                }
+            }
+
+            // Gem normperiode indstillinger
+            const normWeeks = document.getElementById('normWeeks');
+            const weeklyHours = document.getElementById('weeklyHours');
+            
+            if (normWeeks) normSettings.weeks = parseInt(normWeeks.value);
+            if (weeklyHours) normSettings.weeklyHours = parseInt(weeklyHours.value);
+
+            // Opdater display
+            updateSchedule();
+            closeAdminPanel();
+
+            alert('Ændringer gemt!');
+        }
+
+        // Hjælpefunktion: udregner hvilket navn en rullevagt viser i en given uge
+        function getRotationNavn(vagtNum, week) {
+            const vagt = vagter[vagtNum];
+            if (vagt.type !== 'rolle' || !vagt.rotationList || vagt.rotationList.length === 0) {
+                return vagt.navn;
+            }
+            const antalPersoner = vagt.rotationList.length;
+            const rotationIndex =
+                ((vagtNum - week) % antalPersoner + antalPersoner)
+                % antalPersoner;
+            return vagt.rotationList[rotationIndex];
+        }
+
+        let currentEditKey = null;
+
+        function openDayEditModal(week, vagtNum, day) {
+            currentEditKey = `${week}-${vagtNum}-${day}`;
+            const override = weeklyOverrides[currentEditKey] || {};
+
+            // FIX: brug hjælpefunktionen i stedet for udefinerede variable
+            // (tidligere: "vagt" og "selectedWeek" fandtes ikke i dette scope)
+            const navn = getRotationNavn(vagtNum, week);
+
+            document.getElementById('dayEditName').value = override.navn || navn;
+            document.getElementById('dayEditKortDag').checked = override.kortDag || false;
+            document.getElementById('dayEditTitle').textContent = `Rediger vagt for ${vagter[vagtNum].time}`;
+            
+            document.getElementById('dayEditModal').classList.add('show');
+        }
+
+        function closeDayEditModal() {
+            document.getElementById('dayEditModal').classList.remove('show');
+            currentEditKey = null;
+        }
+
+        function saveDayEdit() {
+            if (!currentEditKey) return;
+            
+            const navn = document.getElementById('dayEditName').value.trim();
+            const kortDag = document.getElementById('dayEditKortDag').checked;
+            
+            if (navn) {
+                weeklyOverrides[currentEditKey] = { navn, kortDag };
+            } else {
+                delete weeklyOverrides[currentEditKey];
+            }
+            
+            updateSchedule();
+            closeDayEditModal();
+        }
+
+        function updateSchedule() {
+            const weekSelect = document.getElementById('weekSelect');
+            const selectedWeek = parseInt(weekSelect.value) + 1;
+            const weekInfo = document.getElementById('weekInfo');
+            const dateInfo = document.getElementById('dateInfo');
+            const scheduleBody = document.getElementById('scheduleBody');
+            
+            weekInfo.textContent = `Uge ${selectedWeek} af 52`;
+            
+            // Hent ugedatoer
+            const weekDates = getWeekDates(selectedWeek);
+            
+            // Opdater datoer i headers
+            weekDates.forEach(dayInfo => {
+                const dateElement = document.getElementById(`date-${dayInfo.dayId}`);
+                if (dateElement) {
+                    dateElement.textContent = ` (${dayInfo.dateDisplay})`;
+                }
+            });
+            
+            // Vis dato interval
+            const startDate = weekDates[0].fullDate;
+            const endDate = weekDates[4].fullDate;
+            dateInfo.textContent = `${startDate} - ${endDate}`;
+            
+            // Ryd tabel
+            scheduleBody.innerHTML = '';
+            
+            // Generer rækker for hver vagt
+            for (let vagtNum = 1; vagtNum <= 5; vagtNum++) {
+                const vagt = vagter[vagtNum];
+                const row = document.createElement('tr');
+                
+                // Vagt label
+                const labelCell = document.createElement('td');
+                labelCell.className = 'shift-label';
+                labelCell.innerHTML = `<strong>${vagt.time}</strong>`;
+                row.appendChild(labelCell);
+                
+                // FIX: udregn rotationsnavnet én gang for ugen (rullevagter roterer pr. uge, ikke pr. dag)
+                const rotationNavn = getRotationNavn(vagtNum, selectedWeek);
+
+                // Dage
+                for (let day = 0; day < 5; day++) {
+                    const dayCell = document.createElement('td');
+                    
+                    let navn = rotationNavn;
+
+                    // Tjek for dagsniveau overrides
+                    const overrideKey = `${selectedWeek}-${vagtNum}-${day}`;
+                    let kortDag = false;
+                    if (weeklyOverrides[overrideKey]) {
+                        navn = weeklyOverrides[overrideKey].navn;
+                        kortDag = weeklyOverrides[overrideKey].kortDag;
+                    }
+                    
+                    const vagtClass = `vagt-${vagtNum}`;
+                    dayCell.className = `${vagtClass}`;
+                    dayCell.onclick = () => openDayEditModal(selectedWeek, vagtNum, day);
+                    dayCell.innerHTML = `<div class="shift-name ${kortDag ? 'has-kort-dag' : ''}">
+                        <span>${navn}</span>
+                        <span class="shift-time">${vagt.time}</span>
+                    </div>`;
+                    
+                    row.appendChild(dayCell);
+                }
+                
+                scheduleBody.appendChild(row);
+            }
+
+            // Opdater legende
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`vagtNavn${i}`).textContent = 
+                    vagter[i].navn + (vagter[i].type === 'fast' ? ' (Fast)' : '');
+            }
+
+            // Opdater stats
+            document.getElementById('normPeriod').textContent = `${normSettings.weeks} uger`;
+            document.getElementById('periodHours').textContent = `${normSettings.weeks * normSettings.weeklyHours} timer`;
+        }
+
+        // Initialiser ved indlæsning
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeWeekSelector();
+            updateSchedule();
+            
+            // Luk modal når der klikkes uden for det
+            window.onclick = function(event) {
+                const adminModal = document.getElementById('adminModal');
+                const dayModal = document.getElementById('dayEditModal');
+                if (event.target == adminModal) {
+                    adminModal.classList.remove('show');
+                }
+                if (event.target == dayModal) {
+                    dayModal.classList.remove('show');
+                }
+            };
+        });
+    </script>
+</body>
+</html>
