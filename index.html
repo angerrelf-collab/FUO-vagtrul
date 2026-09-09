@@ -1005,6 +1005,8 @@
                     
                     let navn = vagt.navn;
                     
+                    console.log('Uge: ',selectedWeek,' Vagt: ',vagtNum,' Type: ',vagt.type);            
+                    
                     // Hvis rullevagt, roter mellem medarbejdere
                     if (vagt.type === 'rolle' && vagt.rotationList && vagt.rotationList.length > 0) {
                         const antalPersoner = vagt.rotationList.length;
