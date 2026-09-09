@@ -922,9 +922,12 @@
             
             let navn = vagter[vagtNum].navn;
             if (vagter[vagtNum].type === 'rolle' && vagter[vagtNum].rotationList) {
+                
+                const antalPersoner = vagt.rotationList.length;
+
                 const rotationIndex =
-                    (vagtNum - week + vagter[vagtNum].rotationList.length)
-                    % vagter[vagtNum].rotationList.length;
+                    ((vagtNum - selectedWeek) % antalPersoner + antalPersoner)
+                    % antalPersoner;
 
                 navn = vagter[vagtNum].rotationList[rotationIndex];
             }
@@ -1004,10 +1007,11 @@
                     
                     // Hvis rullevagt, roter mellem medarbejdere
                     if (vagt.type === 'rolle' && vagt.rotationList && vagt.rotationList.length > 0) {
+                        const antalPersoner = vagt.rotationList.length;
+
                         const rotationIndex =
-                            (vagtNum - selectedWeek + vagt.rotationList.length)
-                            % vagt.rotationList.length;
-                        navn = vagt.rotationList[rotationIndex];
+                            ((vagtNum - selectedWeek) % antalPersoner + antalPersoner)
+                            % antalPersoner;
                     }
 
                     // Tjek for dagsniveau overrides
