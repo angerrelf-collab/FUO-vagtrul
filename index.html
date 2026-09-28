@@ -1237,8 +1237,21 @@
 
         async function writePayloadToFileHandle(fileHandle, payload) {
             const writable = await fileHandle.createWritable();
-            await writable.write(JSON.stringify(payload, null, 2));
-            await writable.close();
+            let writeSucceeded = false;
+
+            try {
+                await writable.write(JSON.stringify(payload, null, 2));
+                writeSucceeded = true;
+            } catch (error) {
+                if (typeof writable.abort === 'function') {
+                    await writable.abort();
+                }
+                throw error;
+            } finally {
+                if (writeSucceeded) {
+                    await writable.close();
+                }
+            }
         }
 
         async function hasReadWritePermission(fileHandle, requestIfNeeded = false) {
@@ -1708,9 +1721,17 @@
 
             // Opdater legende
             for (let i = 1; i <= 5; i++) {
-                document.getElementById(`vagtNavn${i}`).textContent =
-                    vagter[i].navn + (vagter[i].type === 'fast' ? ' (Fast)' : '');
-                document.getElementById(`vagtTid${i}`).textContent = vagter[i].time;
+                const nameElement = document.getElementById(`vagtNavn${i}`);
+                const timeElement = document.getElementById(`vagtTid${i}`);
+
+                if (nameElement) {
+                    nameElement.textContent =
+                        vagter[i].navn + (vagter[i].type === 'fast' ? ' (Fast)' : '');
+                }
+
+                if (timeElement) {
+                    timeElement.textContent = vagter[i].time;
+                }
             }
 
             // Opdater stats
