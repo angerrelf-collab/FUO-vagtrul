@@ -1584,7 +1584,10 @@
                     alert('Ændringerne er opdateret i planen. Husk også at gemme datafilen.');
                 }
             } else {
-                setDataMessage('Ingen ændringer at gemme i planen.');
+                updateDirtyStateFromBaseline(
+                    'Der er stadig ikke-gemte ændringer i planen.',
+                    'Planen matcher den senest gemte datafil.'
+                );
             }
         }
 
