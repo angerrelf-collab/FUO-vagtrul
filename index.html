@@ -1685,19 +1685,19 @@
                 row.appendChild(labelCell);
                 
                 // FIX: udregn rotationsnavnet én gang for ugen (rullevagter roterer pr. uge, ikke pr. dag)
-                const rotationNavn = getRotationNavn(vagtNum, selectedWeek);
+                const defaultDisplayName = getRotationNavn(vagtNum, selectedWeek);
 
                 // Dage
                 for (let day = 0; day < 5; day++) {
                     const dayCell = document.createElement('td');
                     
-                    let navn = rotationNavn;
+                    let navn = defaultDisplayName;
 
                     // Tjek for dagsniveau overrides
                     const overrideKey = `${selectedWeek}-${vagtNum}-${day}`;
                     let kortDag = false;
                     if (weeklyOverrides[overrideKey]) {
-                        navn = weeklyOverrides[overrideKey].navn || rotationNavn;
+                        navn = weeklyOverrides[overrideKey].navn || defaultDisplayName;
                         kortDag = weeklyOverrides[overrideKey].kortDag;
                     }
                     
