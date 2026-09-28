@@ -1360,7 +1360,12 @@
                 if (!dataFileName) {
                     dataFileName = 'vagtplan-data.json';
                 }
-                setDirtyState(true, 'Data blev eksporteret som download. Kopiér eller gem filen tilbage på fællesdrevet før du lukker.');
+                lastPersistedFingerprint = JSON.stringify({
+                    vagter: payload.vagter,
+                    normSettings: payload.normSettings,
+                    weeklyOverrides: payload.weeklyOverrides
+                });
+                setDirtyState(false, 'Data blev eksporteret som download. Kopiér eller gem filen tilbage på fællesdrevet manuelt.');
             } catch (error) {
                 console.error(error);
                 alert('Kunne ikke gemme datafilen. Prøv igen eller brug download-filen.');
