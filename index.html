@@ -1180,11 +1180,10 @@
 
                     const file = await handle.getFile();
                     const fileText = await file.text();
-                    const canWriteBack = await hasReadWritePermission(handle, false);
                     await loadDataFromJsonText(fileText, {
                         handle,
                         fileName: file.name || handle.name || 'vagtplan-data.json',
-                        canWriteBack,
+                        canWriteBack: false,
                         message: 'Data indlæst fra valgt JSON-fil.'
                     });
                     return;
@@ -1276,15 +1275,15 @@
                 return false;
             }
 
-            try {
-                if (!(await hasReadWritePermission(dataFileHandle, true))) {
-                    return false;
-                }
+            if (!(await hasReadWritePermission(dataFileHandle, true))) {
+                return false;
+            }
 
+            try {
                 await writePayloadToFileHandle(dataFileHandle, payload);
                 return true;
             } catch (error) {
-                if (error && (error.name === 'AbortError' || error.name === 'NotAllowedError')) {
+                if (error && error.name === 'AbortError') {
                     return false;
                 }
                 throw error;
@@ -1361,12 +1360,7 @@
                 if (!dataFileName) {
                     dataFileName = 'vagtplan-data.json';
                 }
-                lastPersistedFingerprint = JSON.stringify({
-                    vagter: payload.vagter,
-                    normSettings: payload.normSettings,
-                    weeklyOverrides: payload.weeklyOverrides
-                });
-                setDirtyState(false, 'Data blev eksporteret som download. Flyt filen til fællesdrevet efter behov.');
+                setDirtyState(true, 'Data blev eksporteret som download. Kopiér eller gem filen tilbage på fællesdrevet før du lukker.');
             } catch (error) {
                 console.error(error);
                 alert('Kunne ikke gemme datafilen. Prøv igen eller brug download-filen.');
