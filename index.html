@@ -925,9 +925,13 @@
             }
 
             if (statusNote) {
-                statusNote.textContent = canWriteBackToSelectedFile
-                    ? 'Gem skriver direkte til den valgte fil, når Edge stadig giver adgang. Ved afvist adgang bruges en gem-dialog eller download.'
-                    : 'Gem ændringer manuelt før du lukker fanen. Browseren må ikke åbne en asynkron fil-dialog automatisk ved lukning.';
+                if (canWriteBackToSelectedFile) {
+                    statusNote.textContent = 'Gem skriver direkte til den valgte fil, når Edge stadig giver adgang. Ved afvist adgang bruges en gem-dialog eller download.';
+                } else if (dataFileHandle) {
+                    statusNote.textContent = 'Filen er valgt. Når du trykker Gem, forsøger Edge at bede om skriveadgang til samme fil. Hvis adgang afvises, bruges en gem-dialog eller download.';
+                } else {
+                    statusNote.textContent = 'Gem ændringer manuelt før du lukker fanen. Browseren må ikke åbne en asynkron fil-dialog automatisk ved lukning.';
+                }
             }
 
             if (statsStatus) {
@@ -1005,7 +1009,7 @@
                 normalizedShift.type = candidateShift.type;
             }
 
-            normalizedShift.locked = Boolean(defaultShift.locked || candidateShift.locked);
+            normalizedShift.locked = Boolean(defaultShift.locked);
 
             if (normalizedShift.type === 'rolle') {
                 normalizedShift.rotationList = normalizeRotationList(
@@ -1052,6 +1056,10 @@
 
             if (!Number.isInteger(formatVersion)) {
                 throw new Error('Datafilens formatversion er ugyldig.');
+            }
+
+            if (formatVersion !== DATA_FORMAT_VERSION) {
+                throw new Error(`Datafilens formatversion ${formatVersion} understøttes ikke. Brug en fil i formatversion ${DATA_FORMAT_VERSION}.`);
             }
 
             const normalizedVagter = {};
@@ -1160,10 +1168,11 @@
 
                     const file = await handle.getFile();
                     const fileText = await file.text();
+                    const canWriteBack = await hasReadWritePermission(handle, false);
                     await loadDataFromJsonText(fileText, {
                         handle,
                         fileName: file.name || handle.name || 'vagtplan-data.json',
-                        canWriteBack: true,
+                        canWriteBack,
                         message: 'Data indlæst fra valgt JSON-fil.'
                     });
                     return;
@@ -1220,20 +1229,31 @@
             await writable.close();
         }
 
+        async function hasReadWritePermission(fileHandle, requestIfNeeded = false) {
+            if (!fileHandle) {
+                return false;
+            }
+
+            if (typeof fileHandle.queryPermission !== 'function') {
+                return true;
+            }
+
+            let permissionState = await fileHandle.queryPermission({ mode: 'readwrite' });
+            if (permissionState !== 'granted' && requestIfNeeded && typeof fileHandle.requestPermission === 'function') {
+                permissionState = await fileHandle.requestPermission({ mode: 'readwrite' });
+            }
+
+            return permissionState === 'granted';
+        }
+
         async function trySaveToSelectedFile(payload) {
             if (!dataFileHandle || typeof dataFileHandle.createWritable !== 'function') {
                 return false;
             }
 
             try {
-                if (typeof dataFileHandle.queryPermission === 'function') {
-                    let permissionState = await dataFileHandle.queryPermission({ mode: 'readwrite' });
-                    if (permissionState !== 'granted' && typeof dataFileHandle.requestPermission === 'function') {
-                        permissionState = await dataFileHandle.requestPermission({ mode: 'readwrite' });
-                    }
-                    if (permissionState !== 'granted') {
-                        return false;
-                    }
+                if (!(await hasReadWritePermission(dataFileHandle, true))) {
+                    return false;
                 }
 
                 await writePayloadToFileHandle(dataFileHandle, payload);
@@ -1286,7 +1306,7 @@
                         await writePayloadToFileHandle(handle, payload);
                         dataFileHandle = handle;
                         dataFileName = handle.name || dataFileName || 'vagtplan-data.json';
-                        canWriteBackToSelectedFile = true;
+                        canWriteBackToSelectedFile = await hasReadWritePermission(handle, false);
                         lastSavedAt = payload.meta.savedAt;
                         setDirtyState(false, 'Data gemt via Edge-filvælgeren.');
                         return;
