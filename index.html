@@ -1714,7 +1714,10 @@
                     dayCell.onclick = () => openDayEditModal(selectedWeek, vagtNum, day);
 
                     const shiftWrapper = document.createElement('div');
-                    shiftWrapper.className = `shift-name ${kortDag ? 'has-kort-dag' : ''}`.trim();
+                    shiftWrapper.className = 'shift-name';
+                    if (kortDag) {
+                        shiftWrapper.classList.add('has-kort-dag');
+                    }
 
                     const nameSpan = document.createElement('span');
                     nameSpan.textContent = navn;
