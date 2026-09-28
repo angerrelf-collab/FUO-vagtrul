@@ -521,6 +521,10 @@
             font-size: 1.1em;
         }
 
+        .shift-editor-extra {
+            margin-top: 10px;
+        }
+
         .shift-edit-row {
             display: grid;
             grid-template-columns: 2fr 1fr;
@@ -881,10 +885,6 @@
         let dataStatusMessage = 'Indlæs en JSON-datafil fra fællesdrevet for at arbejde videre.';
         let canWriteBackToSelectedFile = false;
         let lastPersistedFingerprint = '';
-        let loadedDataMeta = {
-            formatVersion: DATA_FORMAT_VERSION,
-            appVersion: APP_VERSION
-        };
 
         function deepClone(value) {
             return JSON.parse(JSON.stringify(value));
@@ -969,8 +969,7 @@
             return {
                 meta: {
                     formatVersion: DATA_FORMAT_VERSION,
-                    appVersion: loadedDataMeta.appVersion || APP_VERSION,
-                    savedByAppVersion: APP_VERSION,
+                    appVersion: APP_VERSION,
                     savedAt: new Date().toISOString()
                 },
                 vagter: deepClone(vagter),
@@ -1071,8 +1070,8 @@
                 throw new Error('Datafilens formatversion er ugyldig.');
             }
 
-            if (formatVersion > DATA_FORMAT_VERSION) {
-                throw new Error(`Datafilens formatversion ${formatVersion} understøttes ikke endnu. Brug en fil i formatversion ${DATA_FORMAT_VERSION} eller en ældre kompatibel version.`);
+            if (formatVersion !== DATA_FORMAT_VERSION) {
+                throw new Error(`Datafilens formatversion ${formatVersion} understøttes ikke. Brug en fil i formatversion ${DATA_FORMAT_VERSION}.`);
             }
 
             const normalizedVagter = {};
@@ -1103,9 +1102,6 @@
             return {
                 meta: {
                     formatVersion,
-                    appVersion: rawData.meta && typeof rawData.meta.appVersion === 'string'
-                        ? rawData.meta.appVersion.trim()
-                        : null,
                     savedAt: rawData.meta && typeof rawData.meta.savedAt === 'string' ? rawData.meta.savedAt : null
                 },
                 vagter: normalizedVagter,
@@ -1128,10 +1124,6 @@
             dataFileName = options.fileName || '';
             canWriteBackToSelectedFile = Boolean(options.canWriteBack && dataFileHandle);
             lastSavedAt = normalizedState.meta.savedAt;
-            loadedDataMeta = {
-                formatVersion: normalizedState.meta.formatVersion,
-                appVersion: normalizedState.meta.appVersion || APP_VERSION
-            };
             lastPersistedFingerprint = getStateFingerprint();
 
             syncAdminInputs();
@@ -1312,7 +1304,7 @@
             document.body.appendChild(downloadLink);
             downloadLink.click();
             downloadLink.remove();
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 0);
         }
 
         async function saveDataFile() {
@@ -1512,7 +1504,7 @@
 
                 if (!isFixed && vagt.rotationList) {
                     const rotationWrapper = document.createElement('div');
-                    rotationWrapper.style.marginTop = '10px';
+                    rotationWrapper.className = 'shift-editor-extra';
 
                     const rotationLabel = document.createElement('label');
                     rotationLabel.textContent = 'Rotationsliste (kommasepareret):';
