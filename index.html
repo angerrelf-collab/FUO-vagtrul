@@ -834,8 +834,8 @@
         <div class="day-edit-content">
             <h3 id="dayEditTitle">Rediger vagt</h3>
             <div class="day-edit-form">
-                <label>Navn på medarbejder:</label>
-                <input type="text" id="dayEditName" placeholder="Indtast navn">
+                <label for="dayEditName">Navn på medarbejder:</label>
+                <select id="dayEditName"></select>
                 
                 <div class="kort-dag-selector">
                     <label>
@@ -855,12 +855,41 @@
     <script>
         // Standard vagter med tider
         const vagter = {
-            1: { time: '07:00-15:00', navn: 'Christian', type: 'rolle', rotationList: ['Christian', 'Michael', 'Martin'] },
-            2: { time: '08:00-16:00', navn: 'Michael', type: 'rolle', rotationList: ['Christian', 'Michael', 'Martin'] },
-            3: { time: '12:00-20:00', navn: 'Martin', type: 'rolle', rotationList: ['Christian', 'Michael', 'Martin'] },
+            1: { time: '07:00-15:00', navn: 'Christian', type: 'rolle' },
+            2: { time: '08:00-16:00', navn: 'Michael', type: 'rolle' },
+            3: { time: '12:00-20:00', navn: 'Martin', type: 'rolle' },
             4: { time: '10:00-18:00', navn: 'Henrik', type: 'fast', locked: true },
             5: { time: '07:30-15:00', navn: 'Dorte', type: 'fast', locked: true }
         };
+
+        const SHIFT_NAME_OPTIONS = Object.freeze({
+            1: Object.freeze(['Martin', 'Christian']),
+            2: Object.freeze(['Martin', 'Christian', 'Michael']),
+            3: Object.freeze(['Martin', 'Christian', 'Michael'])
+        });
+
+        function createSeededWeeklyOverrides() {
+            const seededOverrides = Object.create(null);
+
+            for (let week = 40; week <= 52; week++) {
+                for (let day = 0; day < 5; day++) {
+                    seededOverrides[`${week}-1-${day}`] = {
+                        navn: SHIFT_NAME_OPTIONS[1][(week + day) % SHIFT_NAME_OPTIONS[1].length],
+                        kortDag: false
+                    };
+                    seededOverrides[`${week}-2-${day}`] = {
+                        navn: SHIFT_NAME_OPTIONS[2][(week + day) % SHIFT_NAME_OPTIONS[2].length],
+                        kortDag: false
+                    };
+                    seededOverrides[`${week}-3-${day}`] = {
+                        navn: SHIFT_NAME_OPTIONS[3][(week + day + 1) % SHIFT_NAME_OPTIONS[3].length],
+                        kortDag: false
+                    };
+                }
+            }
+
+            return seededOverrides;
+        }
 
         // Normperiode indstillinger
         let normSettings = {
@@ -869,7 +898,7 @@
         };
 
         // Dagsniveau overrides og kortdagsindstillinger
-        let weeklyOverrides = Object.create(null); // { 'uge-vagt-dag': { navn: 'X', kortDag: true/false } }
+        let weeklyOverrides = createSeededWeeklyOverrides(); // { 'uge-vagt-dag': { navn: 'X', kortDag: true/false } }
 
         const APP_VERSION = '1.3';
         const DATA_FORMAT_VERSION = 1;
@@ -1013,18 +1042,6 @@
             return typeof value === 'string' ? value.trim() : fallbackValue;
         }
 
-        function normalizeRotationList(rotationList, fallbackName) {
-            if (!Array.isArray(rotationList)) {
-                return [fallbackName];
-            }
-
-            const cleaned = rotationList
-                .map(item => sanitizeText(item))
-                .filter(Boolean);
-
-            return cleaned.length > 0 ? cleaned : [fallbackName];
-        }
-
         function normalizeShift(shiftNumber, candidateShift) {
             const defaultShift = DEFAULT_VAGTER[shiftNumber];
             const normalizedShift = deepClone(defaultShift);
@@ -1048,15 +1065,6 @@
             }
 
             normalizedShift.locked = Boolean(defaultShift.locked);
-
-            if (normalizedShift.type === 'rolle') {
-                normalizedShift.rotationList = normalizeRotationList(
-                    candidateShift.rotationList ?? normalizedShift.rotationList,
-                    normalizedShift.navn
-                );
-            } else {
-                delete normalizedShift.rotationList;
-            }
 
             return normalizedShift;
         }
@@ -1519,23 +1527,6 @@
                 editRow.appendChild(typeWrapper);
                 vagtDiv.appendChild(editRow);
 
-                if (!isFixed && vagt.rotationList) {
-                    const rotationWrapper = document.createElement('div');
-                    rotationWrapper.className = 'shift-editor-extra';
-
-                    const rotationLabel = document.createElement('label');
-                    rotationLabel.textContent = 'Rotationsliste (kommasepareret):';
-
-                    const rotationInput = document.createElement('input');
-                    rotationInput.type = 'text';
-                    rotationInput.id = `shift-${i}-rotation`;
-                    rotationInput.value = vagt.rotationList.join(', ');
-
-                    rotationWrapper.appendChild(rotationLabel);
-                    rotationWrapper.appendChild(rotationInput);
-                    vagtDiv.appendChild(rotationWrapper);
-                }
-
                 container.appendChild(vagtDiv);
             }
         }
@@ -1544,11 +1535,6 @@
             if (vagter[shiftNum].locked) return;
             
             vagter[shiftNum].type = type;
-            if (type === 'rolle') {
-                vagter[shiftNum].rotationList = normalizeRotationList(vagter[shiftNum].rotationList, vagter[shiftNum].navn);
-            } else {
-                delete vagter[shiftNum].rotationList;
-            }
             updateDirtyStateFromBaseline(
                 'Vagttypen er ændret. Husk at gemme datafilen.',
                 'Vagttypen matcher igen den senest gemte datafil.'
@@ -1566,12 +1552,6 @@
                     vagter[i].navn = nameInput.value.trim() || DEFAULT_VAGTER[i].navn;
                 }
 
-                const rotationInput = document.getElementById(`shift-${i}-rotation`);
-                if (rotationInput) {
-                    vagter[i].rotationList = normalizeRotationList(rotationInput.value.split(','), vagter[i].navn);
-                } else if (vagter[i].type !== 'rolle') {
-                    delete vagter[i].rotationList;
-                }
             }
 
             // Gem normperiode indstillinger
@@ -1600,30 +1580,39 @@
             }
         }
 
-        // Hjælpefunktion: udregner hvilket navn en rullevagt viser i en given uge
-        function getRotationNavn(vagtNum, week) {
-            const vagt = vagter[vagtNum];
-            if (vagt.type !== 'rolle' || !vagt.rotationList || vagt.rotationList.length === 0) {
-                return vagt.navn;
-            }
-            const antalPersoner = vagt.rotationList.length;
-            const rotationIndex =
-                ((vagtNum - week) % antalPersoner + antalPersoner)
-                % antalPersoner;
-            return vagt.rotationList[rotationIndex];
+        function getDefaultShiftName(vagtNum) {
+            return vagter[vagtNum].navn;
+        }
+
+        function populateDayEditNameOptions(vagtNum, selectedName) {
+            const dayEditName = document.getElementById('dayEditName');
+            const allowedNames = SHIFT_NAME_OPTIONS[vagtNum] || [];
+            const fallbackName = allowedNames.includes(selectedName)
+                ? selectedName
+                : (allowedNames.includes(vagter[vagtNum].navn) ? vagter[vagtNum].navn : allowedNames[0] || '');
+
+            dayEditName.innerHTML = '';
+            allowedNames.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                dayEditName.appendChild(option);
+            });
+            dayEditName.value = fallbackName;
         }
 
         let currentEditKey = null;
 
         function openDayEditModal(week, vagtNum, day) {
+            if (!SHIFT_NAME_OPTIONS[vagtNum]) {
+                return;
+            }
+
             currentEditKey = `${week}-${vagtNum}-${day}`;
             const override = weeklyOverrides[currentEditKey] || {};
+            const navn = override.navn || getDefaultShiftName(vagtNum);
 
-            // FIX: brug hjælpefunktionen i stedet for udefinerede variable
-            // (tidligere: "vagt" og "selectedWeek" fandtes ikke i dette scope)
-            const navn = getRotationNavn(vagtNum, week);
-
-            document.getElementById('dayEditName').value = override.navn || navn;
+            populateDayEditNameOptions(vagtNum, navn);
             document.getElementById('dayEditKortDag').checked = override.kortDag || false;
             document.getElementById('dayEditTitle').textContent = `Rediger vagt for ${vagter[vagtNum].time}`;
             
@@ -1640,7 +1629,7 @@
 
             const stateBeforeChanges = getStateFingerprint();
             
-            const navn = document.getElementById('dayEditName').value.trim();
+            const navn = document.getElementById('dayEditName').value;
             const kortDag = document.getElementById('dayEditKortDag').checked;
             
             if (navn || kortDag) {
@@ -1701,8 +1690,7 @@
                 labelCell.appendChild(labelText);
                 row.appendChild(labelCell);
                 
-                // FIX: udregn rotationsnavnet én gang for ugen (rullevagter roterer pr. uge, ikke pr. dag)
-                const defaultDisplayName = getRotationNavn(vagtNum, selectedWeek);
+                const defaultDisplayName = getDefaultShiftName(vagtNum);
 
                 // Dage
                 for (let day = 0; day < 5; day++) {
@@ -1720,7 +1708,9 @@
                     
                     const vagtClass = `vagt-${vagtNum}`;
                     dayCell.className = `${vagtClass}`;
-                    dayCell.onclick = () => openDayEditModal(selectedWeek, vagtNum, day);
+                    if (SHIFT_NAME_OPTIONS[vagtNum]) {
+                        dayCell.onclick = () => openDayEditModal(selectedWeek, vagtNum, day);
+                    }
 
                     const shiftWrapper = document.createElement('div');
                     shiftWrapper.className = 'shift-name';
