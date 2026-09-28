@@ -1047,7 +1047,7 @@
                 return null;
             }
 
-            return { navn, kortDag };
+            return { navn: navn || '', kortDag };
         }
 
         function normalizeAppState(rawData) {
