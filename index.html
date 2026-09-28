@@ -879,6 +879,7 @@
         let lastSavedAt = null;
         let dataStatusMessage = 'Indlæs en JSON-datafil fra fællesdrevet for at arbejde videre.';
         let canWriteBackToSelectedFile = false;
+        let lastPersistedFingerprint = '';
 
         function deepClone(value) {
             return JSON.parse(JSON.stringify(value));
@@ -895,6 +896,12 @@
                 dataStatusMessage = message;
             }
             updateDataStatus();
+        }
+
+        function updateDirtyStateFromBaseline(dirtyMessage, cleanMessage) {
+            const isDirty = getStateFingerprint() !== lastPersistedFingerprint;
+            setDirtyState(isDirty, isDirty ? dirtyMessage : cleanMessage);
+            return isDirty;
         }
 
         function updateDataStatus() {
@@ -1109,6 +1116,7 @@
             dataFileName = options.fileName || '';
             canWriteBackToSelectedFile = Boolean(options.canWriteBack && dataFileHandle);
             lastSavedAt = normalizedState.meta.savedAt;
+            lastPersistedFingerprint = getStateFingerprint();
 
             syncAdminInputs();
             renderShiftEditor();
@@ -1284,7 +1292,13 @@
 
             try {
                 if (await trySaveToSelectedFile(payload)) {
+                    canWriteBackToSelectedFile = true;
                     lastSavedAt = payload.meta.savedAt;
+                    lastPersistedFingerprint = JSON.stringify({
+                        vagter: payload.vagter,
+                        normSettings: payload.normSettings,
+                        weeklyOverrides: payload.weeklyOverrides
+                    });
                     setDirtyState(false, 'Data gemt direkte i den valgte fil.');
                     return;
                 }
@@ -1306,8 +1320,13 @@
                         await writePayloadToFileHandle(handle, payload);
                         dataFileHandle = handle;
                         dataFileName = handle.name || dataFileName || 'vagtplan-data.json';
-                        canWriteBackToSelectedFile = await hasReadWritePermission(handle, false);
+                        canWriteBackToSelectedFile = true;
                         lastSavedAt = payload.meta.savedAt;
+                        lastPersistedFingerprint = JSON.stringify({
+                            vagter: payload.vagter,
+                            normSettings: payload.normSettings,
+                            weeklyOverrides: payload.weeklyOverrides
+                        });
                         setDirtyState(false, 'Data gemt via Edge-filvælgeren.');
                         return;
                     } catch (error) {
@@ -1325,6 +1344,11 @@
                 if (!dataFileName) {
                     dataFileName = 'vagtplan-data.json';
                 }
+                lastPersistedFingerprint = JSON.stringify({
+                    vagter: payload.vagter,
+                    normSettings: payload.normSettings,
+                    weeklyOverrides: payload.weeklyOverrides
+                });
                 setDirtyState(false, 'Data blev eksporteret som download. Flyt filen til fællesdrevet efter behov.');
             } catch (error) {
                 console.error(error);
@@ -1488,7 +1512,10 @@
             } else {
                 delete vagter[shiftNum].rotationList;
             }
-            setDirtyState(true, 'Vagttypen er ændret. Husk at gemme datafilen.');
+            updateDirtyStateFromBaseline(
+                'Vagttypen er ændret. Husk at gemme datafilen.',
+                'Vagttypen matcher igen den senest gemte datafil.'
+            );
             renderShiftEditor();
         }
 
@@ -1522,8 +1549,12 @@
             closeAdminPanel();
 
             if (stateBeforeChanges !== getStateFingerprint()) {
-                setDirtyState(true, 'Planen er opdateret. Husk at gemme JSON-filen.');
-                alert('Ændringerne er opdateret i planen. Husk også at gemme datafilen.');
+                if (updateDirtyStateFromBaseline(
+                    'Planen er opdateret. Husk at gemme JSON-filen.',
+                    'Planen matcher igen den senest gemte datafil.'
+                )) {
+                    alert('Ændringerne er opdateret i planen. Husk også at gemme datafilen.');
+                }
             } else {
                 setDataMessage('Ingen ændringer at gemme i planen.');
             }
@@ -1582,7 +1613,10 @@
             closeDayEditModal();
 
             if (stateBeforeChanges !== getStateFingerprint()) {
-                setDirtyState(true, 'En dag er ændret. Husk at gemme JSON-filen.');
+                updateDirtyStateFromBaseline(
+                    'En dag er ændret. Husk at gemme JSON-filen.',
+                    'Dagens data matcher igen den senest gemte datafil.'
+                );
             }
         }
 
@@ -1685,6 +1719,7 @@
             initializeWeekSelector();
             syncAdminInputs();
             updateSchedule();
+            lastPersistedFingerprint = getStateFingerprint();
             updateDataStatus();
             document.getElementById('dataFileInput').addEventListener('change', handleDataFileInputChange);
             
