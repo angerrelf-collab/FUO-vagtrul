@@ -904,9 +904,35 @@
         }
 
         function updateDirtyStateFromBaseline(dirtyMessage, cleanMessage) {
-            const isDirty = getStateFingerprint() !== lastPersistedFingerprint;
+            const isDirty = !lastPersistedFingerprint || getStateFingerprint() !== lastPersistedFingerprint;
             setDirtyState(isDirty, isDirty ? dirtyMessage : cleanMessage);
             return isDirty;
+        }
+
+        function getPayloadFingerprint(payload) {
+            return JSON.stringify({
+                vagter: payload.vagter,
+                normSettings: payload.normSettings,
+                weeklyOverrides: payload.weeklyOverrides
+            });
+        }
+
+        function finalizeSuccessfulSave(payload, options) {
+            if (Object.prototype.hasOwnProperty.call(options, 'handle')) {
+                dataFileHandle = options.handle;
+            }
+
+            if (Object.prototype.hasOwnProperty.call(options, 'fileName')) {
+                dataFileName = options.fileName;
+            }
+
+            if (typeof options.canWriteBack === 'boolean') {
+                canWriteBackToSelectedFile = options.canWriteBack;
+            }
+
+            lastSavedAt = payload.meta.savedAt;
+            lastPersistedFingerprint = getPayloadFingerprint(payload);
+            setDirtyState(false, options.message);
         }
 
         function updateDataStatus() {
@@ -1312,14 +1338,10 @@
 
             try {
                 if (await trySaveToSelectedFile(payload)) {
-                    canWriteBackToSelectedFile = true;
-                    lastSavedAt = payload.meta.savedAt;
-                    lastPersistedFingerprint = JSON.stringify({
-                        vagter: payload.vagter,
-                        normSettings: payload.normSettings,
-                        weeklyOverrides: payload.weeklyOverrides
+                    finalizeSuccessfulSave(payload, {
+                        canWriteBack: true,
+                        message: 'Data gemt direkte i den valgte fil.'
                     });
-                    setDirtyState(false, 'Data gemt direkte i den valgte fil.');
                     return;
                 }
 
@@ -1338,16 +1360,12 @@
                         }
 
                         await writePayloadToFileHandle(handle, payload);
-                        dataFileHandle = handle;
-                        dataFileName = handle.name || dataFileName || 'vagtplan-data.json';
-                        canWriteBackToSelectedFile = true;
-                        lastSavedAt = payload.meta.savedAt;
-                        lastPersistedFingerprint = JSON.stringify({
-                            vagter: payload.vagter,
-                            normSettings: payload.normSettings,
-                            weeklyOverrides: payload.weeklyOverrides
+                        finalizeSuccessfulSave(payload, {
+                            handle,
+                            fileName: handle.name || dataFileName || 'vagtplan-data.json',
+                            canWriteBack: true,
+                            message: 'Data gemt via Edge-filvælgeren.'
                         });
-                        setDirtyState(false, 'Data gemt via Edge-filvælgeren.');
                         return;
                     } catch (error) {
                         if (error && error.name === 'AbortError') {
@@ -1364,12 +1382,11 @@
                 if (!dataFileName) {
                     dataFileName = 'vagtplan-data.json';
                 }
-                lastPersistedFingerprint = JSON.stringify({
-                    vagter: payload.vagter,
-                    normSettings: payload.normSettings,
-                    weeklyOverrides: payload.weeklyOverrides
+                finalizeSuccessfulSave(payload, {
+                    fileName: dataFileName,
+                    canWriteBack: false,
+                    message: 'Data blev eksporteret som download. Kopiér eller gem filen tilbage på fællesdrevet manuelt.'
                 });
-                setDirtyState(false, 'Data blev eksporteret som download. Kopiér eller gem filen tilbage på fællesdrevet manuelt.');
             } catch (error) {
                 console.error(error);
                 alert('Kunne ikke gemme datafilen. Prøv igen eller brug download-filen.');
@@ -1753,7 +1770,6 @@
             initializeWeekSelector();
             syncAdminInputs();
             updateSchedule();
-            lastPersistedFingerprint = getStateFingerprint();
             updateDataStatus();
             document.getElementById('dataFileInput').addEventListener('change', handleDataFileInputChange);
             
