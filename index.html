@@ -865,10 +865,11 @@
         };
 
         // Dagsniveau overrides og kortdagsindstillinger
-        let weeklyOverrides = {}; // { 'uge-vagt-dag': { navn: 'X', kortDag: true/false } }
+        let weeklyOverrides = Object.create(null); // { 'uge-vagt-dag': { navn: 'X', kortDag: true/false } }
 
         const APP_VERSION = '1.3';
         const DATA_FORMAT_VERSION = 1;
+        const WEEKLY_OVERRIDE_KEY_PATTERN = /^([1-9]|[1-4][0-9]|5[0-2])-[1-5]-[0-4]$/;
         const DEFAULT_VAGTER = JSON.parse(JSON.stringify(vagter));
         const DEFAULT_NORM_SETTINGS = JSON.parse(JSON.stringify(normSettings));
         const VALID_SHIFT_TYPES = new Set(['rolle', 'fast']);
@@ -1081,9 +1082,12 @@
                 normalizedNormSettings.weeklyHours = parsePositiveInteger(rawData.normSettings.weeklyHours, normalizedNormSettings.weeklyHours);
             }
 
-            const normalizedWeeklyOverrides = {};
+            const normalizedWeeklyOverrides = Object.create(null);
             if (rawData.weeklyOverrides && typeof rawData.weeklyOverrides === 'object' && !Array.isArray(rawData.weeklyOverrides)) {
                 Object.entries(rawData.weeklyOverrides).forEach(([overrideKey, overrideValue]) => {
+                    if (!WEEKLY_OVERRIDE_KEY_PATTERN.test(overrideKey)) {
+                        return;
+                    }
                     const normalizedValue = normalizeWeeklyOverrideValue(overrideValue);
                     if (normalizedValue) {
                         normalizedWeeklyOverrides[overrideKey] = normalizedValue;
@@ -1111,7 +1115,7 @@
             Object.keys(normSettings).forEach(key => delete normSettings[key]);
             Object.assign(normSettings, deepClone(normalizedState.normSettings));
 
-            weeklyOverrides = deepClone(normalizedState.weeklyOverrides);
+            weeklyOverrides = Object.assign(Object.create(null), deepClone(normalizedState.weeklyOverrides));
             dataFileHandle = options.handle || null;
             dataFileName = options.fileName || '';
             canWriteBackToSelectedFile = Boolean(options.canWriteBack && dataFileHandle);
