@@ -996,6 +996,12 @@
 
             if (scheduleArea) {
                 scheduleArea.classList.toggle('schedule-locked', !isDataLoaded);
+                scheduleArea.setAttribute('aria-disabled', String(!isDataLoaded));
+                if (isDataLoaded) {
+                    scheduleArea.removeAttribute('inert');
+                } else {
+                    scheduleArea.setAttribute('inert', '');
+                }
             }
 
             if (banner) {
