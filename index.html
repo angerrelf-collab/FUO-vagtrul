@@ -681,6 +681,41 @@
                 border-radius: 0;
             }
         }
+          /* Containeren sørger for, at boksen placeres rigtigt i forhold til knappen */
+  .help-container {
+    position: relative;
+    display: inline-block;
+    font-family: sans-serif;
+  }
+
+  .help-button {
+    cursor: pointer;
+    padding: 5px 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+  }
+
+  /* Selve hjælpeboksen */
+  .help-box {
+    display: none; /* Skjult som standard */
+    position: absolute;
+    top: 100%; /* Placer boksen lige under knappen */
+    left: 0;
+    background-color: #f9f9f9;
+    color: #333;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
+    width: 200px;
+    z-index: 100;
+    margin-top: 5px;
+  }
+          /* DETTE ER TRICKET: Når man hover over containeren, vises boksen */
+  .help-container:hover .help-box {
+    display: block;
     </style>
 </head>
 <body>
@@ -714,6 +749,16 @@
                     <button class="print-button" type="button" onclick="window.print()">
                         🖨️ Print vagtplan
                     </button>
+                    <button class="admin-button" type="button">
+                        Hjælp
+                          <div class="help-container">
+    <button class="help-button">Hjælpe tekst</button>
+    <div class="help-box">
+      Indlæs data filen først. <br>Og husk at gemme hvis du laver ændringer
+    </div>
+  </div>
+                    </button>
+                    
                 </div>
                 <div class="data-panel" aria-live="polite">
                     <div class="data-panel-heading">Delte data (JSON)</div>
@@ -733,6 +778,7 @@
                     </div>
                     <input type="file" id="dataFileInput" accept=".json,application/json" hidden>
                 </div>
+                
             </div>
         </div>
 
