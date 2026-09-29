@@ -1,4 +1,15 @@
 ---------------------
+Opdatering 29/9-2026
+
+Version er lagt ud til test på et fælles drev.
+Alle har PT adgang til det, men det er primært Dorte som skal tilgå det for test.
+Der er ikke tilføjet nogen sikkerhed og det vil der nok heller ikke blive.
+
+Se Issues for fremtidige opdateringer.
+
+Som altid er positiv feedback velkommen :)
+
+---------------------
 Opdateringer 2/9-2026
 
 # Copilot status (2026-09-02)
