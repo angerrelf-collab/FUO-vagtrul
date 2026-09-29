@@ -198,6 +198,33 @@
             overflow-x: auto;
         }
 
+        .data-required-banner {
+            background: #fff3cd;
+            border: 1px solid #ffe69c;
+            color: #7a5d00;
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin: 20px 30px 0 30px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .schedule-locked {
+            opacity: 0.45;
+            filter: grayscale(0.5);
+            pointer-events: none;
+            user-select: none;
+            cursor: not-allowed;
+        }
+
+        .admin-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -725,6 +752,10 @@
             <p>Rulle- og fastvagtskema - Mandag til Fredag</p>
         </header>
 
+        <div id="dataRequiredBanner" class="data-required-banner" role="alert">
+            ⚠️ Indlæs datafilen før du begynder at arbejde med vagtplanen.
+        </div>
+
         <div class="controls">
             <div class="week-selector">
                 <label for="weekSelect">Vælg uge:</label>
@@ -743,7 +774,7 @@
             </div>
             <div class="controls-actions">
                 <div class="button-group">
-                    <button class="admin-button" type="button" onclick="openAdminPanel()">
+                    <button id="adminPanelButton" class="admin-button" type="button" onclick="openAdminPanel()">
                         ⚙️ Administrer vagter
                     </button>
                     <button class="print-button" type="button" onclick="window.print()">
@@ -757,17 +788,17 @@
                         <button class="admin-button" type="button" onclick="loadDataFile()">
                             📂 Indlæs data
                         </button>
-                        <button class="admin-button" type="button" onclick="saveDataFile()">
+                        <button id="saveDataButton" class="admin-button" type="button" onclick="saveDataFile()">
                             💾 Gem data
                         </button>
                       <div class="admin-button help-container">
                         <button class="help-button">Hjælp</button>
-                        <div class="help-box">Indlæs data filen når du har åbnet denne webside. </br>Husk at gemme hvis du laver ændringer.</div>
+                        <div class="help-box">Indlæs data filen når du har åbnet denne webside, før du kan redigere eller gemme. </br>Husk at gemme hvis du laver ændringer.</div>
                       </div>
                     </div>
                     <div class="data-status-lines">
                         <div><strong>Fil:</strong> <span id="dataFileStatus">Ingen datafil valgt endnu.</span></div>
-                        <div><strong>Ændringer:</strong> <span id="dataSaveStatus" class="data-status-badge waiting">Indlæs en JSON-datafil fra fællesdrevet for at komme i gang.</span></div>
+                        <div><strong>Ændringer:</strong> <span id="dataSaveStatus" class="data-status-badge waiting">Indlæs datafilen før du kan redigere vagtplanen.</span></div>
                         <div><strong>Senest gemt:</strong> <span id="dataSavedAt">Ikke gemt endnu</span></div>
                         <div class="data-status-note" id="dataStatusNote">Gem ændringer manuelt før du lukker fanen. Browseren må ikke åbne en asynkron fil-dialog automatisk ved lukning.</div>
                     </div>
@@ -777,7 +808,7 @@
             </div>
         </div>
 
-        <div class="table-container">
+        <div class="table-container" id="scheduleArea">
             <table id="scheduleTable">
                 <thead>
                     <tr>
@@ -952,9 +983,45 @@
         let dataFileName = '';
         let hasUnsavedChanges = false;
         let lastSavedAt = null;
-        let dataStatusMessage = 'Indlæs en JSON-datafil fra fællesdrevet for at arbejde videre.';
+        let dataStatusMessage = 'Indlæs datafilen før du kan redigere vagtplanen.';
         let canWriteBackToSelectedFile = false;
         let lastPersistedFingerprint = '';
+        let isDataLoaded = false;
+
+        function updateLockedState() {
+            const scheduleArea = document.getElementById('scheduleArea');
+            const banner = document.getElementById('dataRequiredBanner');
+            const adminButton = document.getElementById('adminPanelButton');
+            const saveButton = document.getElementById('saveDataButton');
+
+            if (scheduleArea) {
+                scheduleArea.classList.toggle('schedule-locked', !isDataLoaded);
+            }
+
+            if (banner) {
+                banner.style.display = isDataLoaded ? 'none' : 'flex';
+            }
+
+            if (adminButton) {
+                adminButton.disabled = !isDataLoaded;
+            }
+
+            if (saveButton) {
+                saveButton.disabled = !isDataLoaded;
+            }
+
+            updateDataStatus();
+        }
+
+        function ensureDataLoadedOrWarn(handling) {
+            if (isDataLoaded) {
+                return true;
+            }
+
+            alert(`Indlæs datafilen, før du kan ${handling}.`);
+            return false;
+        }
+
 
         function deepClone(value) {
             return JSON.parse(JSON.stringify(value));
@@ -1205,6 +1272,9 @@
             renderShiftEditor();
             updateSchedule();
             setDirtyState(false, options.message || 'Data indlæst.');
+
+            isDataLoaded = true;
+            updateLockedState();
         }
 
         function syncAdminInputs() {
@@ -1383,6 +1453,10 @@
         }
 
         async function saveDataFile() {
+            if (!ensureDataLoadedOrWarn('gemme datafilen')) {
+                return;
+            }
+
             const payload = buildDataPayload();
 
             try {
@@ -1501,6 +1575,10 @@
         }
 
         function openAdminPanel() {
+            if (!ensureDataLoadedOrWarn('administrere vagter')) {
+                return;
+            }
+
             const modal = document.getElementById('adminModal');
             modal.classList.add('show');
             syncAdminInputs();
@@ -1584,6 +1662,10 @@
         }
 
         function saveAdminSettings() {
+            if (!ensureDataLoadedOrWarn('gemme ændringer')) {
+                return;
+            }
+
             const stateBeforeChanges = getStateFingerprint();
 
             // Gem vagt indstillinger
@@ -1645,6 +1727,10 @@
         let currentEditKey = null;
 
         function openDayEditModal(week, vagtNum, day) {
+            if (!ensureDataLoadedOrWarn('redigere en dag')) {
+                return;
+            }
+
             if (!SHIFT_NAME_OPTIONS[vagtNum]) {
                 return;
             }
@@ -1666,6 +1752,10 @@
         }
 
         function saveDayEdit() {
+            if (!ensureDataLoadedOrWarn('gemme dagens ændringer')) {
+                return;
+            }
+
             if (!currentEditKey) return;
 
             const stateBeforeChanges = getStateFingerprint();
@@ -1802,6 +1892,7 @@
             syncAdminInputs();
             updateSchedule();
             updateDataStatus();
+            updateLockedState();
             document.getElementById('dataFileInput').addEventListener('change', handleDataFileInputChange);
             
             // Luk modal når der klikkes uden for det
