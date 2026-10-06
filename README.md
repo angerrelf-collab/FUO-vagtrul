@@ -92,3 +92,8 @@ Hvornår går perioden fra og til.
 
 1 valgfri ½ time kortere arbejdsdag pr uge.
 
+## Brug af den statiske vagtplan
+
+Åbn `index.html`, vælg år og uge, og indtast vagter eller fravær. Planen gemmes automatisk i browserens lokale lager. Brug **Indlæs JSON** til at vælge `vagtplan.json` fra fællesdrevet og **Gem JSON på fællesdrev** for at skrive ændringer tilbage. Browseren kan bede om skrivetilladelse; hvis direkte skrivning ikke understøttes, kan planen downloades og den eksisterende fil erstattes manuelt. **Importér JSON** indlæser en tidligere plan, og **Download JSON** laver en eksport.
+
+En almindelig HTML-side kan ikke hente eller overskrive filer på et fællesdrev uden browserens tilladelse. Når siden åbnes direkte som en lokal fil, skal `vagtplan.json` derfor vælges manuelt. Hvis JSON-filen ikke er tilgængelig, bruges browserens lokale lager som fallback; det deler ikke ændringer med andre computere. Danske helligdage for 2024–2026 ligger i `holidays.json`.
