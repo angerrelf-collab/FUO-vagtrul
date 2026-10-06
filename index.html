@@ -3,249 +3,586 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vagtplan Demo</title>
-
+<title>FUO Vagtplan</title>
 <style>
-body{
-    font-family: Arial, sans-serif;
-    margin:20px;
-    background:#f5f7fa;
-}
-
-h1{
-    text-align:center;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    background:white;
-}
-
-th{
-    background:#2c3e50;
-    color:white;
-    padding:10px;
-}
-
-td{
-    border:1px solid #dcdcdc;
-    padding:6px;
-    vertical-align:top;
-}
-
-.name-cell{
-    font-weight:bold;
-    background:#eef3f7;
-    width:120px;
-}
-
-.day-cell{
-    min-width:180px;
-}
-
-.shift-select,
-.absence-select{
-    width:100%;
-    padding:5px;
-    margin-bottom:4px;
-    border-radius:4px;
-    border:1px solid #bbb;
-}
-
-.shift-blue{
-    background:#4A90E2;
-    color:white;
-}
-
-.shift-green{
-    background:#27AE60;
-    color:white;
-}
-
-.shift-orange{
-    background:#F39C12;
-    color:white;
-}
-
-.shift-purple{
-    background:#8E44AD;
-    color:white;
-}
-
-.shift-red{
-    background:#E74C3C;
-    color:white;
-}
-
-.absence-ferie{
-    background:#95A5A6;
-    color:white;
-}
-
-.absence-syg{
-    background:#E67E22;
-    color:white;
-}
-
-.absence-barn-syg{
-    background:#3498DB;
-    color:white;
-}
-
-.absence-kursus{
-    background:#9B59B6;
-    color:white;
+* { box-sizing: border-box; }
+body { margin: 0; padding: 20px; background: #f5f7fa; color: #263746; font-family: Arial, sans-serif; }
+main { max-width: 1400px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 18px #0002; overflow: hidden; }
+header { padding: 20px; color: white; text-align: center; background: #2c3e50; }
+h1 { margin: 0 0 8px; }
+.toolbar, .data-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 14px 20px; background: #eef3f7; }
+.toolbar { justify-content: space-between; }
+.week-nav, .history-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+button, select { min-height: 38px; padding: 7px 10px; border: 1px solid #aebac5; border-radius: 5px; font: inherit; }
+button { color: white; background: #2878a5; border: 0; cursor: pointer; }
+button:hover:not(:disabled) { background: #205f83; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+#weekInfo { font-weight: bold; }
+#dateInfo { color: #536879; }
+.data-tools { background: #f8f9fa; }
+.status { padding: 9px 20px; min-height: 40px; background: #e8f4f8; }
+.status.error { color: #842029; background: #f8d7da; }
+.status.warning { color: #664d03; background: #fff3cd; }
+.table-wrap { overflow-x: auto; padding: 16px; }
+table { width: 100%; min-width: 850px; border-collapse: collapse; background: white; }
+th, td { border: 1px solid #d4dce2; padding: 8px; text-align: center; vertical-align: top; }
+th { color: white; background: #2c3e50; }
+th:first-child { min-width: 130px; }
+th .date { display: block; margin-top: 5px; font-weight: normal; }
+.day-cell { min-width: 145px; }
+.name-cell { font-weight: bold; background: #eef3f7; }
+.shift-select, .absence-select { width: 100%; margin: 0 0 5px; background: white; }
+.shift-blue { color: white; background: #4a90e2; }
+.shift-green { color: white; background: #27ae60; }
+.shift-orange { color: white; background: #f39c12; }
+.shift-purple { color: white; background: #8e44ad; }
+.shift-red { color: white; background: #e74c3c; }
+.absence-ferie { color: white; background: #7f8c8d; }
+.absence-syg { color: white; background: #d35400; }
+.absence-barn-syg { color: white; background: #2980b9; }
+.absence-kursus { color: white; background: #8e44ad; }
+.holiday { background: #fde2e2 !important; }
+th.holiday { color: #7b2020; background: #efb4b4 !important; }
+.validation { margin: 0 16px 16px; padding: 10px 14px; border-radius: 5px; background: #e8f4f8; }
+.validation.warning { color: #664d03; background: #fff3cd; }
+@media (max-width: 650px) {
+  body { padding: 0; }
+  main { border-radius: 0; }
+  .toolbar, .data-tools { align-items: stretch; flex-direction: column; }
+  .week-nav, .history-tools { justify-content: center; }
+  .table-wrap { padding: 8px; }
 }
 </style>
 </head>
-
 <body>
-
-<h1>Vagtplan Demo</h1>
-
-<table id="schedule">
-    <thead>
-        <tr>
-            <th>Medarbejder</th>
-            <th>Mandag</th>
-            <th>Tirsdag</th>
-            <th>Onsdag</th>
-            <th>Torsdag</th>
-            <th>Fredag</th>
-        </tr>
-    </thead>
-    <tbody></tbody>
-</table>
-
+<main>
+  <header>
+    <h1>FUO Vagtplan</h1>
+    <div>Vagt- og fraværsplan — mandag til fredag</div>
+  </header>
+  <section class="toolbar" aria-label="Ugenavigation">
+    <div class="week-nav">
+      <button id="previousWeek" type="button" aria-label="Forrige uge">← Forrige</button>
+      <label for="yearSelect">År:</label><select id="yearSelect"></select>
+      <label for="weekSelect">Uge:</label><select id="weekSelect"></select>
+      <button id="todayButton" type="button">I dag</button>
+      <button id="nextWeek" type="button" aria-label="Næste uge">Næste →</button>
+    </div>
+    <div><div id="weekInfo"></div><div id="dateInfo"></div></div>
+    <div class="history-tools">
+      <button id="undoButton" type="button" disabled>Fortryd</button>
+      <button id="redoButton" type="button" disabled>Gentag</button>
+    </div>
+  </section>
+  <section class="data-tools" aria-label="JSON-data">
+    <button id="loadButton" type="button">Indlæs JSON</button>
+    <button id="saveButton" type="button">Gem JSON på fællesdrev</button>
+    <button id="downloadButton" type="button">Download JSON</button>
+    <button id="uploadButton" type="button">Importér JSON</button>
+    <input id="fileInput" type="file" accept=".json,application/json" hidden>
+    <input id="importInput" type="file" accept=".json,application/json" hidden>
+  </section>
+  <div id="status" class="status" role="status" aria-live="polite">Indlæser vagtplan og helligdage…</div>
+  <div class="table-wrap">
+    <table id="schedule">
+      <thead><tr id="dayHead"><th>Medarbejder</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div id="validation" class="validation" role="status" aria-live="polite"></div>
+</main>
 <script>
-const medarbejdere = [
-    "Christian",
-    "Dorte",
-    "Henrik",
-    "Martin",
-    "Michel"
-];
+'use strict';
 
-const dage = [
-    "Mandag",
-    "Tirsdag",
-    "Onsdag",
-    "Torsdag",
-    "Fredag"
-];
+const employees = ['Christian', 'Dorte', 'Henrik', 'Martin', 'Michel'];
+const weekdays = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag'];
+const shifts = ['7-15', '7:30-15', '8-16', '10-18', '12-20'];
+const absences = ['Ferie', 'Syg', 'Barn syg', 'Kursus'];
+const storageKey = 'fuo-vagtplan-v1';
+const historyLimit = 50;
+const years = [2024, 2025, 2026];
+const fallbackHolidays = {
+  '2024-01-01': 'Nytårsdag', '2024-03-28': 'Skærtorsdag', '2024-03-29': 'Langfredag',
+  '2024-03-31': 'Påskedag', '2024-04-01': '2. påskedag', '2024-05-09': 'Kristi himmelfartsdag',
+  '2024-05-19': 'Pinsedag', '2024-05-20': '2. pinsedag', '2024-12-25': 'Juledag', '2024-12-26': '2. juledag',
+  '2025-01-01': 'Nytårsdag', '2025-04-17': 'Skærtorsdag', '2025-04-18': 'Langfredag',
+  '2025-04-20': 'Påskedag', '2025-04-21': '2. påskedag', '2025-05-29': 'Kristi himmelfartsdag',
+  '2025-06-08': 'Pinsedag', '2025-06-09': '2. pinsedag', '2025-12-25': 'Juledag', '2025-12-26': '2. juledag',
+  '2026-01-01': 'Nytårsdag', '2026-04-02': 'Skærtorsdag', '2026-04-03': 'Langfredag',
+  '2026-04-05': 'Påskedag', '2026-04-06': '2. påskedag', '2026-05-14': 'Kristi himmelfartsdag',
+  '2026-05-24': 'Pinsedag', '2026-05-25': '2. pinsedag', '2026-12-25': 'Juledag', '2026-12-26': '2. juledag'
+};
+let scheduleData = Object.create(null);
+let holidays = { ...fallbackHolidays };
+let selectedFileHandle = null;
+let undoStack = [];
+let redoStack = [];
+let autosaveQueue = Promise.resolve();
 
-const tbody = document.querySelector("#schedule tbody");
+const $ = id => document.getElementById(id);
+const clone = value => JSON.parse(JSON.stringify(value));
+const formatISODate = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-medarbejdere.forEach(navn => {
+function isoWeekDate(year, week, weekday = 1) {
+  const jan4 = new Date(year, 0, 4);
+  const monday = new Date(year, 0, 4 - ((jan4.getDay() + 6) % 7));
+  monday.setDate(monday.getDate() + (week - 1) * 7 + weekday - 1);
+  return monday;
+}
 
-    const row = document.createElement("tr");
+function isoWeeksInYear(year) {
+  return currentISOWeek(new Date(year, 11, 28)).week;
+}
 
-    const nameCell = document.createElement("td");
-    nameCell.textContent = navn;
-    nameCell.className = "name-cell";
-    row.appendChild(nameCell);
+function currentISOWeek(date = new Date()) {
+  const utc = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = utc.getUTCDay() || 7;
+  utc.setUTCDate(utc.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+  return { year: utc.getUTCFullYear(), week: Math.ceil((((utc - yearStart) / 86400000) + 1) / 7) };
+}
 
-    dage.forEach(() => {
+function setStatus(message, type = '') {
+  $('status').textContent = message;
+  $('status').className = `status ${type}`.trim();
+}
 
-        const cell = document.createElement("td");
-        cell.className = "day-cell";
+function buildPayload() {
+  return {
+    meta: { formatVersion: 1, savedAt: new Date().toISOString() },
+    employees: [...employees],
+    schedule: clone(scheduleData)
+  };
+}
 
-        const shiftSelect = document.createElement("select");
-        shiftSelect.className = "shift-select";
+function normalizePayload(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data) ||
+      !data.schedule || typeof data.schedule !== 'object' || Array.isArray(data.schedule)) {
+    throw new Error('JSON-filen skal indeholde et schedule-objekt.');
+  }
+  const result = Object.create(null);
+  for (const [date, dailyEntries] of Object.entries(data.schedule)) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !dailyEntries || typeof dailyEntries !== 'object' || Array.isArray(dailyEntries)) continue;
+    const normalizedDay = Object.create(null);
+    for (const [employee, entry] of Object.entries(dailyEntries)) {
+      if (!employees.includes(employee) || !entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+      const shift = shifts.includes(entry.shift) ? entry.shift : '';
+      const absence = absences.includes(entry.absence) ? entry.absence : '';
+      if (shift || absence) normalizedDay[employee] = { shift, absence };
+    }
+    if (Object.keys(normalizedDay).length) result[date] = normalizedDay;
+  }
+  return result;
+}
 
-        shiftSelect.innerHTML = `
-            <option value="">Vælg vagt</option>
-            <option value="7-15">7-15</option>
-            <option value="7:30-15">7:30-15</option>
-            <option value="8-16">8-16</option>
-            <option value="10-18">10-18</option>
-            <option value="12-20">12-20</option>
-        `;
+function setSchedule(next, recordHistory = false) {
+  if (recordHistory) {
+    undoStack.push(clone(scheduleData));
+    if (undoStack.length > historyLimit) undoStack.shift();
+    redoStack = [];
+  }
+  scheduleData = next;
+  updateHistoryButtons();
+  renderSchedule();
+  validateAssignments();
+  persistChanges();
+}
 
-        const absenceSelect = document.createElement("select");
-        absenceSelect.className = "absence-select";
+function updateHistoryButtons() {
+  $('undoButton').disabled = undoStack.length === 0;
+  $('redoButton').disabled = redoStack.length === 0;
+}
 
-        absenceSelect.innerHTML = `
-            <option value="">Fravær</option>
-            <option value="Ferie">Ferie</option>
-            <option value="Syg">Syg</option>
-            <option value="Barn syg">Barn syg</option>
-            <option value="Kursus">Kursus</option>
-        `;
+function changeHistory(direction) {
+  const source = direction === 'undo' ? undoStack : redoStack;
+  const destination = direction === 'undo' ? redoStack : undoStack;
+  if (!source.length) return;
+  destination.push(clone(scheduleData));
+  scheduleData = source.pop();
+  updateHistoryButtons();
+  renderSchedule();
+  validateAssignments();
+  persistChanges();
+}
 
-        shiftSelect.addEventListener("change", function() {
+function saveLocal() {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(buildPayload()));
+    return true;
+  } catch (error) {
+    setStatus(`Automatisk lokal lagring mislykkedes: ${error.message}`, 'error');
+    return false;
+  }
+}
 
-            this.classList.remove(
-                "shift-blue",
-                "shift-green",
-                "shift-orange",
-                "shift-purple",
-                "shift-red"
-            );
-
-            switch(this.value){
-
-                case "7-15":
-                    this.classList.add("shift-blue");
-                    break;
-
-                case "7:30-15":
-                    this.classList.add("shift-green");
-                    break;
-
-                case "8-16":
-                    this.classList.add("shift-orange");
-                    break;
-
-                case "10-18":
-                    this.classList.add("shift-purple");
-                    break;
-
-                case "12-20":
-                    this.classList.add("shift-red");
-                    break;
-            }
-        });
-
-        absenceSelect.addEventListener("change", function() {
-
-            this.classList.remove(
-                "absence-ferie",
-                "absence-syg",
-                "absence-barn-syg",
-                "absence-kursus"
-            );
-
-            switch(this.value){
-
-                case "Ferie":
-                    this.classList.add("absence-ferie");
-                    break;
-
-                case "Syg":
-                    this.classList.add("absence-syg");
-                    break;
-
-                case "Barn syg":
-                    this.classList.add("absence-barn-syg");
-                    break;
-
-                case "Kursus":
-                    this.classList.add("absence-kursus");
-                    break;
-            }
-        });
-
-        cell.appendChild(shiftSelect);
-        cell.appendChild(absenceSelect);
-
-        row.appendChild(cell);
+function persistChanges() {
+  const savedLocally = saveLocal();
+  setStatus(savedLocally
+    ? selectedFileHandle
+      ? 'Ændringer gemt lokalt. JSON-filen opdateres automatisk, hvis skrivetilladelse er givet.'
+      : 'Ændringer gemt automatisk i denne browser. Gem JSON-filen på fællesdrevet for at dele dem.'
+    : 'Ændringerne findes kun i denne fane. Download eller gem JSON-filen for at beholde dem.', savedLocally ? 'warning' : 'error');
+  if (selectedFileHandle) {
+    autosaveQueue = autosaveQueue.then(async () => {
+      try {
+        if (await selectedFileHandle.queryPermission({ mode: 'readwrite' }) === 'granted') {
+          const writable = await selectedFileHandle.createWritable();
+          await writable.write(JSON.stringify(buildPayload(), null, 2));
+          await writable.close();
+          setStatus('Ændringer gemt automatisk i JSON-filen og lokalt.', '');
+        }
+      } catch (error) {
+        setStatus(`Lokal lagring er opdateret, men JSON-filen kunne ikke gemmes: ${error.message}`, 'warning');
+      }
     });
+  }
+}
 
+function addSelectOptions(select, options, placeholder) {
+  const empty = document.createElement('option');
+  empty.value = '';
+  empty.textContent = placeholder;
+  select.appendChild(empty);
+  options.forEach(value => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+}
+
+function updateWeekOptions() {
+  const year = Number($('yearSelect').value);
+  const select = $('weekSelect');
+  const previous = Number(select.value) || 1;
+  select.replaceChildren();
+  for (let week = 1; week <= isoWeeksInYear(year); week++) {
+    const monday = isoWeekDate(year, week);
+    const friday = isoWeekDate(year, week, 5);
+    const option = document.createElement('option');
+    option.value = String(week);
+    option.textContent = `Uge ${week} (${monday.toLocaleDateString('da-DK', { day: '2-digit', month: '2-digit' })}–${friday.toLocaleDateString('da-DK', { day: '2-digit', month: '2-digit' })})`;
+    select.appendChild(option);
+  }
+  select.value = String(Math.min(previous, isoWeeksInYear(year)));
+  renderSchedule();
+}
+
+function renderSchedule() {
+  if (!$('yearSelect').value || !$('weekSelect').value) return;
+  const year = Number($('yearSelect').value);
+  const week = Number($('weekSelect').value);
+  const weekDates = weekdays.map((_, index) => isoWeekDate(year, week, index + 1));
+  const monday = weekDates[0];
+  const friday = weekDates[4];
+  $('weekInfo').textContent = `Uge ${week} af ${isoWeeksInYear(year)} · ${year}`;
+  $('dateInfo').textContent = `${monday.toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' })} – ${friday.toLocaleDateString('da-DK', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+
+  const dayHead = $('dayHead');
+  dayHead.replaceChildren();
+  const employeeHeading = document.createElement('th');
+  employeeHeading.scope = 'col';
+  employeeHeading.textContent = 'Medarbejder';
+  dayHead.appendChild(employeeHeading);
+  weekDates.forEach((date, index) => {
+    const dateKey = formatISODate(date);
+    const holiday = holidays[dateKey];
+    const th = document.createElement('th');
+    th.scope = 'col';
+    th.className = holiday ? 'holiday' : '';
+    th.title = holiday || '';
+    th.append(document.createTextNode(weekdays[index]));
+    const dateLabel = document.createElement('span');
+    dateLabel.className = 'date';
+    dateLabel.textContent = `${date.toLocaleDateString('da-DK', { day: '2-digit', month: '2-digit' })}${holiday ? ` · ${holiday}` : ''}`;
+    th.appendChild(dateLabel);
+    dayHead.appendChild(th);
+  });
+
+  const tbody = $('schedule').tBodies[0];
+  tbody.replaceChildren();
+  employees.forEach((employee, employeeIndex) => {
+    const row = document.createElement('tr');
+    const nameCell = document.createElement('td');
+    nameCell.className = 'name-cell';
+    nameCell.textContent = employee;
+    row.appendChild(nameCell);
+    weekDates.forEach((date, dayIndex) => {
+      const dateKey = formatISODate(date);
+      const holiday = holidays[dateKey];
+      const cell = document.createElement('td');
+      cell.className = `day-cell${holiday ? ' holiday' : ''}`;
+      if (holiday) cell.title = holiday;
+      const entry = (scheduleData[dateKey] || {})[employee] || {};
+      const shiftSelect = document.createElement('select');
+      shiftSelect.className = 'shift-select';
+      shiftSelect.setAttribute('aria-label', `${employee}, ${weekdays[dayIndex]}: vagt`);
+      addSelectOptions(shiftSelect, shifts, 'Vælg vagt');
+      shiftSelect.value = entry.shift || '';
+      const absenceSelect = document.createElement('select');
+      absenceSelect.className = 'absence-select';
+      absenceSelect.setAttribute('aria-label', `${employee}, ${weekdays[dayIndex]}: fravær`);
+      addSelectOptions(absenceSelect, absences, 'Fravær');
+      absenceSelect.value = entry.absence || '';
+      applySelectColor(shiftSelect, absenceSelect);
+      const update = () => {
+        const next = clone(scheduleData);
+        const updated = { shift: shiftSelect.value, absence: absenceSelect.value };
+        if (updated.shift || updated.absence) {
+          next[dateKey] = next[dateKey] || {};
+          next[dateKey][employee] = updated;
+        } else if (next[dateKey]) {
+          delete next[dateKey][employee];
+          if (Object.keys(next[dateKey]).length === 0) delete next[dateKey];
+        }
+        setSchedule(next, true);
+      };
+      shiftSelect.addEventListener('change', update);
+      absenceSelect.addEventListener('change', update);
+      cell.append(shiftSelect, absenceSelect);
+      row.appendChild(cell);
+    });
     tbody.appendChild(row);
-});
-</script>
+  });
+  validateAssignments();
+}
 
+function applySelectColor(shiftSelect, absenceSelect) {
+  const shiftClasses = ['shift-blue', 'shift-green', 'shift-orange', 'shift-purple', 'shift-red'];
+  const absenceClasses = ['absence-ferie', 'absence-syg', 'absence-barn-syg', 'absence-kursus'];
+  shiftSelect.classList.remove(...shiftClasses);
+  absenceSelect.classList.remove(...absenceClasses);
+  const shiftIndex = shifts.indexOf(shiftSelect.value);
+  const absenceIndex = absences.indexOf(absenceSelect.value);
+  if (shiftIndex >= 0) shiftSelect.classList.add(shiftClasses[shiftIndex]);
+  if (absenceIndex >= 0) absenceSelect.classList.add(absenceClasses[absenceIndex]);
+}
+
+function validateAssignments() {
+  const year = Number($('yearSelect').value);
+  const week = Number($('weekSelect').value);
+  if (!year || !week) return;
+  const issues = [];
+  for (let day = 0; day < 5; day++) {
+    const dateKey = formatISODate(isoWeekDate(year, week, day + 1));
+    const assigned = new Map();
+    employees.forEach(employee => {
+      const entry = (scheduleData[dateKey] || {})[employee] || {};
+      if (entry.shift) assigned.set(entry.shift, [...(assigned.get(entry.shift) || []), employee]);
+      if (entry.shift && entry.absence) issues.push(`${employee} har både vagt og fravær ${weekdays[day].toLowerCase()}.`);
+    });
+    assigned.forEach((assignedEmployees, shift) => {
+      if (assignedEmployees.length > 1) issues.push(`${shift} er tildelt flere medarbejdere ${weekdays[day].toLowerCase()}.`);
+    });
+  }
+  const validation = $('validation');
+  validation.className = `validation${issues.length ? ' warning' : ''}`;
+  validation.textContent = issues.length ? `Kontrollér uge ${week}: ${issues.join(' ')}` : `Tildelinger for uge ${week} er kontrolleret.`;
+}
+
+function applyImportedData(payload, fileName) {
+  scheduleData = normalizePayload(payload);
+  undoStack = [];
+  redoStack = [];
+  updateHistoryButtons();
+  renderSchedule();
+  validateAssignments();
+  saveLocal();
+  setStatus(`Vagtplan indlæst fra ${fileName}. Ændringer gemmes automatisk lokalt.`, '');
+}
+
+async function readJsonFile(file, handle = null) {
+  try {
+    const payload = JSON.parse(await file.text());
+    scheduleData = normalizePayload(payload);
+    selectedFileHandle = handle;
+    undoStack = [];
+    redoStack = [];
+    updateHistoryButtons();
+    renderSchedule();
+    validateAssignments();
+    saveLocal();
+    setStatus(`Vagtplan indlæst fra ${file.name}. Redigeringer gemmes lokalt automatisk.`, '');
+  } catch (error) {
+    setStatus(`Kunne ikke indlæse JSON-filen: ${error.message}`, 'error');
+  }
+}
+
+async function loadSharedJson() {
+  if (typeof window.showOpenFilePicker === 'function') {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        multiple: false,
+        types: [{ description: 'JSON-vagtplan', accept: { 'application/json': ['.json'] } }]
+      });
+      if (handle) await readJsonFile(await handle.getFile(), handle);
+    } catch (error) {
+      if (error.name !== 'AbortError') setStatus(`Kunne ikke åbne JSON-filen: ${error.message}`, 'error');
+    }
+  } else {
+    $('fileInput').click();
+  }
+}
+
+async function writeToHandle(handle, payload) {
+  const writable = await handle.createWritable();
+  try {
+    await writable.write(JSON.stringify(payload, null, 2));
+    await writable.close();
+  } catch (error) {
+    if (writable.abort) await writable.abort();
+    throw error;
+  }
+}
+
+function downloadPayload() {
+  const blob = new Blob([JSON.stringify(buildPayload(), null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'vagtplan.json';
+  link.click();
+  URL.revokeObjectURL(url);
+  setStatus('JSON-download oprettet. Erstat vagtplan.json på fællesdrevet med den downloadede fil.', 'warning');
+}
+
+async function saveSharedJson() {
+  const payload = buildPayload();
+  try {
+    if (selectedFileHandle) {
+      let permission = await selectedFileHandle.queryPermission({ mode: 'readwrite' });
+      if (permission !== 'granted' && selectedFileHandle.requestPermission) {
+        permission = await selectedFileHandle.requestPermission({ mode: 'readwrite' });
+      }
+      if (permission === 'granted') {
+        await writeToHandle(selectedFileHandle, payload);
+        setStatus('Vagtplanen er gemt i den valgte JSON-fil på fællesdrevet.', '');
+        return;
+      }
+    }
+    if (typeof window.showSaveFilePicker === 'function') {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'vagtplan.json',
+        types: [{ description: 'JSON-vagtplan', accept: { 'application/json': ['.json'] } }]
+      });
+      await writeToHandle(handle, payload);
+      selectedFileHandle = handle;
+      setStatus('Vagtplanen er gemt i JSON-filen.', '');
+      return;
+    }
+    downloadPayload();
+  } catch (error) {
+    if (error.name !== 'AbortError') setStatus(`Kunne ikke gemme JSON-filen: ${error.message}. Brug Download JSON som alternativ.`, 'error');
+  }
+}
+
+async function loadInitialData() {
+  const holidayLoad = fetch('holidays.json', { cache: 'no-store' })
+    .then(response => {
+      if (!response.ok) throw new Error('Helligdagsfilen er ikke tilgængelig.');
+      return response.json();
+    })
+    .then(data => {
+      if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Helligdagsfilen har ugyldigt format.');
+      holidays = data;
+    })
+    .catch(() => { holidays = { ...fallbackHolidays }; });
+  let loadedFromJson = false;
+  try {
+    const response = await fetch('vagtplan.json', { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      scheduleData = normalizePayload(data);
+      loadedFromJson = true;
+      setStatus('Vagtplan indlæst fra vagtplan.json.', '');
+    }
+  } catch (_) {
+    // file:// pages cannot fetch adjacent JSON; use browser storage or manual file selection.
+  }
+  if (!loadedFromJson) {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        scheduleData = normalizePayload(JSON.parse(saved));
+        setStatus('Vagtplan indlæst fra denne browsers lokale lager.', 'warning');
+      } else {
+        setStatus('Ingen datafil fundet. Vælg Indlæs JSON for at hente planen fra fællesdrevet.', 'warning');
+      }
+    } catch (error) {
+      setStatus(`Kunne ikke indlæse gemte data: ${error.message}. Vælg en JSON-fil manuelt.`, 'error');
+    }
+  }
+  await holidayLoad;
+  renderSchedule();
+  validateAssignments();
+}
+
+function initialize() {
+  const current = currentISOWeek();
+  years.forEach(year => {
+    const option = document.createElement('option');
+    option.value = String(year);
+    option.textContent = String(year);
+    $('yearSelect').appendChild(option);
+  });
+  $('yearSelect').value = String(years.includes(current.year) ? current.year : years[years.length - 1]);
+  updateWeekOptions();
+  if (current.year === Number($('yearSelect').value)) $('weekSelect').value = String(current.week);
+  renderSchedule();
+  $('yearSelect').addEventListener('change', () => {
+    $('weekSelect').value = '1';
+    updateWeekOptions();
+  });
+  $('weekSelect').addEventListener('change', renderSchedule);
+  $('previousWeek').addEventListener('click', () => {
+    const week = Number($('weekSelect').value);
+    if (week > 1) $('weekSelect').value = String(week - 1);
+    else if (Number($('yearSelect').value) > years[0]) {
+      $('yearSelect').value = String(Number($('yearSelect').value) - 1);
+      updateWeekOptions();
+      $('weekSelect').value = String(isoWeeksInYear(Number($('yearSelect').value)));
+    }
+    renderSchedule();
+  });
+  $('nextWeek').addEventListener('click', () => {
+    const year = Number($('yearSelect').value);
+    const week = Number($('weekSelect').value);
+    if (week < isoWeeksInYear(year)) $('weekSelect').value = String(week + 1);
+    else if (year < years[years.length - 1]) {
+      $('yearSelect').value = String(year + 1);
+      updateWeekOptions();
+      $('weekSelect').value = '1';
+    }
+    renderSchedule();
+  });
+  $('todayButton').addEventListener('click', () => {
+    const currentWeek = currentISOWeek();
+    if (!years.includes(currentWeek.year)) return;
+    $('yearSelect').value = String(currentWeek.year);
+    updateWeekOptions();
+    $('weekSelect').value = String(currentWeek.week);
+    renderSchedule();
+  });
+  $('undoButton').addEventListener('click', () => changeHistory('undo'));
+  $('redoButton').addEventListener('click', () => changeHistory('redo'));
+  $('loadButton').addEventListener('click', loadSharedJson);
+  $('saveButton').addEventListener('click', saveSharedJson);
+  $('downloadButton').addEventListener('click', downloadPayload);
+  $('uploadButton').addEventListener('click', () => $('importInput').click());
+  $('fileInput').addEventListener('change', event => {
+    const file = event.target.files[0];
+    if (file) readJsonFile(file);
+    event.target.value = '';
+  });
+  $('importInput').addEventListener('change', async event => {
+    const file = event.target.files[0];
+    if (file) await readJsonFile(file);
+    event.target.value = '';
+  });
+  loadInitialData();
+}
+
+document.addEventListener('DOMContentLoaded', initialize);
+</script>
 </body>
 </html>

@@ -1,0 +1,14 @@
+{
+  "meta": {
+    "formatVersion": 1,
+    "savedAt": null
+  },
+  "employees": [
+    "Christian",
+    "Dorte",
+    "Henrik",
+    "Martin",
+    "Michel"
+  ],
+  "schedule": {}
+}
