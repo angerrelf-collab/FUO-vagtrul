@@ -77,6 +77,26 @@ td{
     background:#E74C3C;
     color:white;
 }
+
+.absence-ferie{
+    background:#95A5A6;
+    color:white;
+}
+
+.absence-syg{
+    background:#E67E22;
+    color:white;
+}
+
+.absence-barn-syg{
+    background:#3498DB;
+    color:white;
+}
+
+.absence-kursus{
+    background:#9B59B6;
+    color:white;
+}
 </style>
 </head>
 
@@ -188,7 +208,44 @@ medarbejdere.forEach(navn => {
             }
         });
 
+        absenceSelect.addEventListener("change", function() {
+
+            this.classList.remove(
+                "absence-ferie",
+                "absence-syg",
+                "absence-barn-syg",
+                "absence-kursus"
+            );
+
+            switch(this.value){
+
+                case "Ferie":
+                    this.classList.add("absence-ferie");
+                    break;
+
+                case "Syg":
+                    this.classList.add("absence-syg");
+                    break;
+
+                case "Barn syg":
+                    this.classList.add("absence-barn-syg");
+                    break;
+
+                case "Kursus":
+                    this.classList.add("absence-kursus");
+                    break;
+            }
+        });
+
         cell.appendChild(shiftSelect);
         cell.appendChild(absenceSelect);
 
         row.appendChild(cell);
+    });
+
+    tbody.appendChild(row);
+});
+</script>
+
+</body>
+</html>
