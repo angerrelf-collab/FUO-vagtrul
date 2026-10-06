@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vagtplan Demo</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    margin:20px;
+    background:#f5f7fa;
+}
+
+h1{
+    text-align:center;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+
+th{
+    background:#2c3e50;
+    color:white;
+    padding:10px;
+}
+
+td{
+    border:1px solid #dcdcdc;
+    padding:6px;
+    vertical-align:top;
+}
+
+.name-cell{
+    font-weight:bold;
+    background:#eef3f7;
+    width:120px;
+}
+
+.day-cell{
+    min-width:180px;
+}
+
+.shift-select,
+.absence-select{
+    width:100%;
+    padding:5px;
+    margin-bottom:4px;
+    border-radius:4px;
+    border:1px solid #bbb;
+}
+
+.shift-blue{
+    background:#4A90E2;
+    color:white;
+}
+
+.shift-green{
+    background:#27AE60;
+    color:white;
+}
+
+.shift-orange{
+    background:#F39C12;
+    color:white;
+}
+
+.shift-purple{
+    background:#8E44AD;
+    color:white;
+}
+
+.shift-red{
+    background:#E74C3C;
+    color:white;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Vagtplan Demo</h1>
+
+<table id="schedule">
+    <thead>
+        <tr>
+            <th>Medarbejder</th>
+            <th>Mandag</th>
+            <th>Tirsdag</th>
+            <th>Onsdag</th>
+            <th>Torsdag</th>
+            <th>Fredag</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<script>
+const medarbejdere = [
+    "Christian",
+    "Dorte",
+    "Henrik",
+    "Martin",
+    "Michel"
+];
+
+const dage = [
+    "Mandag",
+    "Tirsdag",
+    "Onsdag",
+    "Torsdag",
+    "Fredag"
+];
+
+const tbody = document.querySelector("#schedule tbody");
+
+medarbejdere.forEach(navn => {
+
+    const row = document.createElement("tr");
+
+    const nameCell = document.createElement("td");
+    nameCell.textContent = navn;
+    nameCell.className = "name-cell";
+    row.appendChild(nameCell);
+
+    dage.forEach(() => {
+
+        const cell = document.createElement("td");
+        cell.className = "day-cell";
+
+        const shiftSelect = document.createElement("select");
+        shiftSelect.className = "shift-select";
+
+        shiftSelect.innerHTML = `
+            <option value="">Vælg vagt</option>
+            <option value="7-15">7-15</option>
+            <option value="7:30-15">7:30-15</option>
+            <option value="8-16">8-16</option>
+            <option value="10-18">10-18</option>
+            <option value="12-20">12-20</option>
+        `;
+
+        const absenceSelect = document.createElement("select");
+        absenceSelect.className = "absence-select";
+
+        absenceSelect.innerHTML = `
+            <option value="">Fravær</option>
+            <option value="Ferie">Ferie</option>
+            <option value="Syg">Syg</option>
+            <option value="Barn syg">Barn syg</option>
+            <option value="Kursus">Kursus</option>
+        `;
+
+        shiftSelect.addEventListener("change", function() {
+
+            this.classList.remove(
+                "shift-blue",
+                "shift-green",
+                "shift-orange",
+                "shift-purple",
+                "shift-red"
+            );
+
+            switch(this.value){
+
+                case "7-15":
+                    this.classList.add("shift-blue");
+                    break;
+
+                case "7:30-15":
+                    this.classList.add("shift-green");
+                    break;
+
+                case "8-16":
+                    this.classList.add("shift-orange");
+                    break;
+
+                case "10-18":
+                    this.classList.add("shift-purple");
+                    break;
+
+                case "12-20":
+                    this.classList.add("shift-red");
+                    break;
+            }
+        });
+
+        cell.appendChild(shiftSelect);
+        cell.appendChild(absenceSelect);
+
+        row.appendChild(cell);
